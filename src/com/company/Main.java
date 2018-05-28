@@ -3,52 +3,98 @@ package com.company;
 import javax.swing.*;
 
 public class Main extends JFrame {
-    private final JButton b = new JButton();
-    private final JButton c = new JButton();
-    private boolean isTest = false;
 
-    private Main() {
-        super();
-        JFrame jFrame = new JFrame();
-        jFrame.setTitle("stockController");
-        jFrame.getContentPane().setLayout(null);
-        jFrame.setBounds(100, 100, 180, 140);
-        jFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        jFrame.add(makeButton());
-        jFrame.add(makeNewButton());
-        jFrame.setVisible(true);
-        jFrame.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setContentPane(jFrame);
-    }
+    private static void createAndShowGUI() {
+        String[] labels = {"Name: ", "Fax: ", "Email: ", "Address: "};
+        int numPairs = labels.length;
 
-    private JButton makeButton() {
-        b.setText("Click me!");
-        b.setBounds(10, 10, 100, 30);
-        b.addActionListener(e -> c.setVisible(false));
-        return b;
-    }
+        //Create and populate the panel.
+        JPanel p = new JPanel(new SpringLayout());
+        for (String label : labels) {
+            JLabel l = new JLabel(label, JLabel.TRAILING);
+            p.add(l);
+            JTextField textField = new JTextField(10);
+            l.setLabelFor(textField);
+            p.add(textField);
+        }
 
-    private JButton makeNewButton() {
-        c.setText("Click me!");
-        c.setBounds(120, 10, 100, 30);
-        c.addActionListener(e -> {
-            if (!isTest) {
-                b.setText("Test coco");
-                isTest = true;
-            } else {
-                b.setText("Click me!");
-                isTest = false;
-            }
-        });
-        return c;
+        //Lay out the panel.
+        SpringUtilities.makeCompactGrid(p,
+                numPairs, 2, //rows, cols
+                6, 6,        //initX, initY
+                6, 6);       //xPad, yPad
+
+        //Create and set up the window.
+        JFrame frame = new JFrame("SpringForm");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        //Set up the content pane.
+        p.setOpaque(true);  //content panes must be opaque
+        frame.setContentPane(p);
+
+        //Display the window.
+        frame.pack();
+        frame.setVisible(true);
     }
 
     public static void main(String[] args) {
-        // Swing calls must be run by the event dispatching thread.
+        //Schedule a job for the event-dispatching thread:
+        //creating and showing this application's GUI.
+        javax.swing.SwingUtilities.invokeLater(Main::createAndShowGUI);
+    }
+
+    /*private final JButton stock = new JButton();
+    private final JButton shop = new JButton();
+
+    private JFrame jFrame = new JFrame();
+
+    public static void main(String[] args) {
         try {
             SwingUtilities.invokeAndWait(Main::new);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    private Main() {
+        super();
+        this.setTitle("Estoque");
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        this.setVisible(true);
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        JTabbedPane tabbedPane = new JTabbedPane();
+
+        SpringLayout gridLayout = new SpringLayout();
+
+        JPanel card1 = new JPanel(gridLayout);
+        card1.add(makeButton());
+
+        JPanel card2 = new JPanel();
+        card2.add(makeNewButton());
+
+        tabbedPane.addTab("          ESTOQUE          ", card1);
+        tabbedPane.addTab("           VENDA           ", card2);
+
+        this.getContentPane().add(tabbedPane);
+    }
+
+    private JButton makeButton() {
+        stock.setText("Estoque");
+        stock.setBounds(10, 10, 100, 30);
+        stock.addActionListener(e -> {
+            jFrame.removeAll();
+            jFrame.revalidate();
+            jFrame.repaint();
+        });
+        return stock;
+    }
+
+    private JButton makeNewButton() {
+        shop.setText("Venda");
+        shop.setBounds(120, 10, 100, 30);
+        shop.addActionListener(e -> {
+
+        });
+        return shop;
+    }*/
 }
