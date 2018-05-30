@@ -3,6 +3,7 @@ package com.company;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
+import java.util.ArrayList;
 
 public class Main extends javax.swing.JFrame {
 
@@ -12,7 +13,7 @@ public class Main extends javax.swing.JFrame {
         itemList.setModel(model);
         try {
             Class.forName("org.h2.Driver");
-            st = DriverManager.getConnection("jdbc:h2:~/stockDB", "test", "test").createStatement();
+            st = DriverManager.getConnection("jdbc:h2:~/stockDBFiles/stockDB", "test", "test").createStatement();
             st.execute("CREATE TABLE stock(barcode varchar(25) NOT NULL PRIMARY KEY, color varchar(25), start varchar(50), description varchar(255), " +
                     "category varchar(25), weight integer, trademark varchar(25), meters integer, location varchar(25), price float, " +
                     "quantity integer, observation varchar(255))");
@@ -335,62 +336,19 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void confirmActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
+        confirmPurchase();
     }
 
     private void cancelActionPerformed(java.awt.event.ActionEvent evt) {
-        if (!model.isEmpty()) {
-            model.removeAllElements();
-        }
-        totalPriceText = (float) 0;
-        totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
-        barCodeToAdd.requestFocus();
-        barCodeToAdd.setText("");
+        clearList();
     }
 
     private void addToListActionPerformed(java.awt.event.ActionEvent evt) {
-        PreparedStatement newSt = null;
-        try {
-            newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
-            newSt.setString(1, barCodeToAdd.getText());
-            ResultSet rs = newSt.executeQuery();
-            if (rs.next()) {
-                String description = rs.getNString(4);
-                Float price = rs.getFloat(10);
-                model.addElement(description + " " + String.valueOf(price));
-                totalPriceText += price;
-                totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
-            } else {
-                JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        barCodeToAdd.requestFocus();
-        barCodeToAdd.setText("");
+        insertItemIntoList();
     }
 
     private void barCodeToAddActionPerformed(java.awt.event.ActionEvent evt) {
-        PreparedStatement newSt = null;
-        try {
-            newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
-            newSt.setString(1, barCodeToAdd.getText());
-            ResultSet rs = newSt.executeQuery();
-            if (rs.next()) {
-                String description = rs.getNString(4);
-                Float price = rs.getFloat(10);
-                model.addElement(description + " " + String.valueOf(price));
-                totalPriceText += price;
-                totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
-                totalPrice.setSize(totalPrice.getPreferredSize());
-            } else {
-                JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        barCodeToAdd.requestFocus();
-        barCodeToAdd.setText("");
+        insertItemIntoList();
     }
 
     private void addToDbActionPerformed(java.awt.event.ActionEvent evt) {
@@ -415,6 +373,63 @@ public class Main extends javax.swing.JFrame {
             e.printStackTrace();
         }
 
+    }
+
+    private void confirmPurchase() {
+        try {
+            if(items.size() > 0) {
+                PreparedStatement newSt = st.getConnection().prepareStatement("UPDATE stock SET quantity = ((SELECT quantity FROM stock WHERE barcode = ? LIMIT 1) - 1) WHERE barcode = ?");
+                for (String item : items) {
+                    newSt.setString(1, item);
+                    newSt.setString(2, item);
+                    newSt.executeUpdate();
+                }
+                items.clear();
+                model.removeAllElements();
+                totalPriceText = (float) 0;
+                totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
+                salePanel.validate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void clearList() {
+        if (!model.isEmpty()) {
+            model.removeAllElements();
+        }
+        items.clear();
+        totalPriceText = (float) 0;
+        totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
+        salePanel.validate();
+        barCodeToAdd.requestFocus();
+        barCodeToAdd.setText("");
+    }
+
+    private void insertItemIntoList() {
+        PreparedStatement newSt = null;
+        try {
+            newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
+            newSt.setString(1, barCodeToAdd.getText());
+            ResultSet rs = newSt.executeQuery();
+            if (rs.next()) {
+                String description = rs.getNString(4);
+                Float price = rs.getFloat(10);
+                items.add(barCodeToAdd.getText());
+                model.addElement(description + " " + String.valueOf(price));
+                totalPriceText += price;
+                totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
+                salePanel.validate();
+                totalPrice.setSize(totalPrice.getPreferredSize());
+            } else {
+                JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        barCodeToAdd.requestFocus();
+        barCodeToAdd.setText("");
     }
 
     public static void main(String args[]) {
@@ -468,6 +483,7 @@ public class Main extends javax.swing.JFrame {
     private java.awt.Label weigth;
     private java.awt.TextField weigthText;
     private DefaultListModel model = new DefaultListModel();
+    private ArrayList<String> items = new ArrayList<>();
     private Statement st;
     private Float totalPriceText = (float) 0;
 
