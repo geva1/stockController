@@ -2,12 +2,7 @@ package com.company;
 
 import javax.swing.*;
 import java.awt.*;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.sql.*;
 
 public class Main extends javax.swing.JFrame {
 
@@ -18,7 +13,7 @@ public class Main extends javax.swing.JFrame {
         try {
             Class.forName("org.h2.Driver");
             st = DriverManager.getConnection("jdbc:h2:~/stockDB", "test", "test").createStatement();
-            st.execute("CREATE TABLE stock(barcode varchar(25), color varchar(25), start varchar(50), description varchar(255), " +
+            st.execute("CREATE TABLE stock(barcode varchar(25) NOT NULL PRIMARY KEY, color varchar(25), start varchar(50), description varchar(255), " +
                     "category varchar(25), weight integer, trademark varchar(25), meters integer, location varchar(25), price float, " +
                     "quantity integer, observation varchar(255))");
         } catch (ClassNotFoundException e) {
@@ -344,28 +339,61 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void cancelActionPerformed(java.awt.event.ActionEvent evt) {
-        if(!model.isEmpty()) {
+        if (!model.isEmpty()) {
             model.removeAllElements();
         }
+        totalPriceText = (float) 0;
+        totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
         barCodeToAdd.requestFocus();
         barCodeToAdd.setText("");
     }
 
     private void addToListActionPerformed(java.awt.event.ActionEvent evt) {
-        //TODO: get information of item from db
-        model.addElement(barCodeToAdd.getText());
+        PreparedStatement newSt = null;
+        try {
+            newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
+            newSt.setString(1, barCodeToAdd.getText());
+            ResultSet rs = newSt.executeQuery();
+            if (rs.next()) {
+                String description = rs.getNString(4);
+                Float price = rs.getFloat(10);
+                model.addElement(description + " " + String.valueOf(price));
+                totalPriceText += price;
+                totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
+            } else {
+                JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         barCodeToAdd.requestFocus();
         barCodeToAdd.setText("");
     }
 
     private void barCodeToAddActionPerformed(java.awt.event.ActionEvent evt) {
-        //TODO: get information of item from db
-        model.addElement(barCodeToAdd.getText());
+        PreparedStatement newSt = null;
+        try {
+            newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
+            newSt.setString(1, barCodeToAdd.getText());
+            ResultSet rs = newSt.executeQuery();
+            if (rs.next()) {
+                String description = rs.getNString(4);
+                Float price = rs.getFloat(10);
+                model.addElement(description + " " + String.valueOf(price));
+                totalPriceText += price;
+                totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
+                totalPrice.setSize(totalPrice.getPreferredSize());
+            } else {
+                JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        barCodeToAdd.requestFocus();
         barCodeToAdd.setText("");
     }
 
     private void addToDbActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
         try {
             PreparedStatement newSt = st.getConnection().prepareStatement("INSERT INTO stock (barcode, color, start, " +
                     "description, category, weight, trademark, meters, location," +
@@ -382,7 +410,7 @@ public class Main extends javax.swing.JFrame {
             newSt.setFloat(10, Float.valueOf(priceText.getText()));
             newSt.setInt(11, Integer.valueOf(quantityText.getText()));
             newSt.setString(12, observationText.getText());
-            Logger.getLogger(Main.class.getName()).log(Level.INFO, "Item added");
+            newSt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -441,5 +469,6 @@ public class Main extends javax.swing.JFrame {
     private java.awt.TextField weigthText;
     private DefaultListModel model = new DefaultListModel();
     private Statement st;
+    private Float totalPriceText = (float) 0;
 
 }
