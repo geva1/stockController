@@ -2,26 +2,34 @@ package com.company;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Main extends javax.swing.JFrame {
 
     private Main() {
-        initComponents();
-        barCodeText.requestFocus();
-        itemList.setModel(model);
         try {
             Class.forName("org.h2.Driver");
-            st = DriverManager.getConnection("jdbc:h2:~/stockDBFiles/stockDB", "test", "test").createStatement();
-            st.execute("CREATE TABLE stock(barcode varchar(25) NOT NULL PRIMARY KEY, color varchar(25), start varchar(50), description varchar(255), " +
-                    "category varchar(25), weight integer, trademark varchar(25), meters integer, location varchar(25), price float, " +
-                    "quantity integer, observation varchar(255))");
+            st = DriverManager.getConnection("jdbc:h2:./stockDBFiles/stockDB", "test", "test").createStatement();
+            st.execute("CREATE TABLE stock(barcode varchar(25) NOT NULL PRIMARY KEY, color varchar(25), start varchar(50), description varchar(255) NOT NULL, " +
+                    "category varchar(25), weight integer, trademark varchar(25), meters integer, location varchar(25), price float NOT NULL, " +
+                    "quantity integer NOT NULL, observation varchar(255))");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ignored) {
         }
+        try {
+            st.execute("CREATE TABLE trademark(trademark varchar(25) NOT NULL PRIMARY KEY)");
+        } catch (SQLException ignored) {
+        }
+        try {
+            st.execute("CREATE TABLE category(category varchar(25) NOT NULL PRIMARY KEY)");
+        } catch (SQLException ignored) {
+        }
+        initComponents();
     }
 
     @SuppressWarnings("unchecked")
@@ -94,11 +102,71 @@ public class Main extends javax.swing.JFrame {
         addToDb.setText("Salvar");
         addToDb.addActionListener(this::addToDbActionPerformed);
 
-        categoryCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
-        categoryCombo.addActionListener(evt -> categoryCombo.transferFocus());
+        try {
+            setTrademarkCombo();
+            trademarkCombo.addActionListener(actionEvent -> {
+                if(trademarkCombo.getSelectedIndex() == 0) {
+                    String marca = JOptionPane.showInputDialog(null, "Marca: ", "Inserir marca", JOptionPane.QUESTION_MESSAGE);
+                    try {
+                        if(marca != null) {
+                            PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO trademark (trademark) VALUES (?)");
+                            novoSt.setString(1, marca);
+                            novoSt.executeUpdate();
+                            setTrademarkCombo();
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Marca já cadastrada");
+                    }
+                } else if(trademarkCombo.getSelectedIndex() == trademarkCombo.getItemCount() - 1) {
+                    String marca = JOptionPane.showInputDialog(null, "Marca: ", "Excluir marca", JOptionPane.QUESTION_MESSAGE);
+                    try {
+                        PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM trademark WHERE trademark = ?");
+                        novoSt.setString(1, marca);
+                        novoSt.executeUpdate();
+                        setTrademarkCombo();
+                    } catch (SQLException e) {
+                    }
+                } else {
+                    trademarkCombo.transferFocus();
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-        trademarkCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[]{"Item 1", "Item 2", "Item 3", "Item 4"}));
-        trademarkCombo.addActionListener(evt -> trademarkCombo.transferFocus());
+        try {
+            setCategoryCombo();
+            categoryCombo.addActionListener(actionEvent -> {
+                if(categoryCombo.getSelectedIndex() == 0) {
+                    String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Inserir categoria", JOptionPane.QUESTION_MESSAGE);
+                    try {
+                        if(marca != null) {
+                            PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO category (category) VALUES (?)");
+                            novoSt.setString(1, marca);
+                            novoSt.executeUpdate();
+                            setCategoryCombo();
+                        }
+                    } catch (SQLException e) {
+                        JOptionPane.showMessageDialog(null, "Categoria já cadastrada");
+                    }
+                } else if(categoryCombo.getSelectedIndex() == categoryCombo.getItemCount() - 1) {
+                    String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Excluir categoria", JOptionPane.QUESTION_MESSAGE);
+                    try {
+                        PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM category WHERE category = ?");
+                        novoSt.setString(1, marca);
+                        novoSt.executeUpdate();
+                        setCategoryCombo();
+                    } catch (SQLException e) {
+                        JOptionPane.showMessageDialog(null, "Categoria não existente");
+                    }
+                } else {
+                    categoryCombo.transferFocus();
+                }
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
         localization.setText("Localização");
 
@@ -257,15 +325,15 @@ public class Main extends javax.swing.JFrame {
         jScrollPane1.setViewportView(itemList);
 
         confirm.setText("Confirmar");
-        confirm.addActionListener(this::confirmActionPerformed);
+        confirm.addActionListener(actionEvent -> confirmPurchase());
 
         cancel.setText("Cancelar");
-        cancel.addActionListener(this::cancelActionPerformed);
+        cancel.addActionListener(actionEvent -> clearList());
 
-        barCodeToAdd.addActionListener(this::barCodeToAddActionPerformed);
+        barCodeToAdd.addActionListener(actionEvent -> insertItemIntoList());
 
         addToList.setText("Adicionar");
-        addToList.addActionListener(this::addToListActionPerformed);
+        addToList.addActionListener(actionEvent -> insertItemIntoList());
 
         total.setFont(new java.awt.Font("Arial", Font.PLAIN, 48)); // NOI18N
         total.setText("Total: ");
@@ -333,22 +401,11 @@ public class Main extends javax.swing.JFrame {
         );
 
         pack();
-    }
 
-    private void confirmActionPerformed(java.awt.event.ActionEvent evt) {
-        confirmPurchase();
-    }
-
-    private void cancelActionPerformed(java.awt.event.ActionEvent evt) {
-        clearList();
-    }
-
-    private void addToListActionPerformed(java.awt.event.ActionEvent evt) {
-        insertItemIntoList();
-    }
-
-    private void barCodeToAddActionPerformed(java.awt.event.ActionEvent evt) {
-        insertItemIntoList();
+        barCodeText.requestFocus();
+        itemList.setCellRenderer(new ItemRenderer());
+        itemList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        itemList.setModel(model);
     }
 
     private void addToDbActionPerformed(java.awt.event.ActionEvent evt) {
@@ -365,26 +422,26 @@ public class Main extends javax.swing.JFrame {
             newSt.setString(7, String.valueOf(trademarkCombo.getSelectedItem()));
             newSt.setInt(8, Integer.valueOf(metersText.getText()));
             newSt.setString(9, localizationText.getText());
-            newSt.setFloat(10, Float.valueOf(priceText.getText()));
+            if(priceText.getText().contains(",")) newSt.setFloat(10, Float.valueOf(priceText.getText().replace(",", ".")));
+            else newSt.setFloat(10, Float.valueOf(priceText.getText()));
             newSt.setInt(11, Integer.valueOf(quantityText.getText()));
             newSt.setString(12, observationText.getText());
             newSt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
     }
 
     private void confirmPurchase() {
         try {
-            if(items.size() > 0) {
-                PreparedStatement newSt = st.getConnection().prepareStatement("UPDATE stock SET quantity = ((SELECT quantity FROM stock WHERE barcode = ? LIMIT 1) - 1) WHERE barcode = ?");
-                for (String item : items) {
-                    newSt.setString(1, item);
-                    newSt.setString(2, item);
+            if(model.size() > 0) {
+                PreparedStatement newSt = st.getConnection().prepareStatement("UPDATE stock SET quantity = ((SELECT quantity FROM stock WHERE barcode = ? LIMIT 1) - ?) WHERE barcode = ?");
+                for (int i = 0; i < model.size(); i++) {
+                    newSt.setString(1, ((ItemObject) model.getElementAt(i)).getBarcode());
+                    newSt.setInt(2, ((ItemObject) model.getElementAt(i)).getQuantity());
+                    newSt.setString(3, ((ItemObject) model.getElementAt(i)).getBarcode());
                     newSt.executeUpdate();
                 }
-                items.clear();
                 model.removeAllElements();
                 totalPriceText = (float) 0;
                 totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
@@ -399,7 +456,6 @@ public class Main extends javax.swing.JFrame {
         if (!model.isEmpty()) {
             model.removeAllElements();
         }
-        items.clear();
         totalPriceText = (float) 0;
         totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
         salePanel.validate();
@@ -408,28 +464,98 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void insertItemIntoList() {
-        PreparedStatement newSt = null;
-        try {
-            newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
-            newSt.setString(1, barCodeToAdd.getText());
-            ResultSet rs = newSt.executeQuery();
-            if (rs.next()) {
-                String description = rs.getNString(4);
-                Float price = rs.getFloat(10);
-                items.add(barCodeToAdd.getText());
-                model.addElement(description + " " + String.valueOf(price));
-                totalPriceText += price;
-                totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
-                salePanel.validate();
-                totalPrice.setSize(totalPrice.getPreferredSize());
+        if(!barCodeToAdd.getText().equals("") && barCodeToAdd.getText() != null) {
+            if (barCodeToAdd.getText().charAt(0) == 'x') {
+                if(model.size() > 0) {
+                    int selected = itemList.getSelectedIndex();
+                    if (selected >= 0) {
+                        if (Integer.valueOf(barCodeToAdd.getText().replace("x", "")) == 0) {
+                            model.remove(selected);
+                            setTotalPriceTextLabel();
+                        } else {
+                            ItemObject itemObject = (ItemObject) model.getElementAt(selected);
+                            model.set(selected, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
+                                    Integer.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
+                            setTotalPriceTextLabel();
+                        }
+                    } else {
+                        if (Integer.valueOf(barCodeToAdd.getText().replace("x", "")) == 0) {
+                            model.remove(model.indexOf(model.lastElement()));
+                            setTotalPriceTextLabel();
+                        } else {
+                            ItemObject itemObject = (ItemObject) model.lastElement();
+                            model.set(model.indexOf(itemObject), new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
+                                    Integer.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
+                            setTotalPriceTextLabel();
+                        }
+                    }
+                }
             } else {
-                JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
+                boolean hasInList = false;
+                for (int i = 0; i < model.size(); i++) {
+                    ItemObject itemObject = (ItemObject) model.getElementAt(i);
+                    if (itemObject.getBarcode().equals(barCodeToAdd.getText())) {
+                        model.set(i, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(), itemObject.getQuantity() + 1, itemObject.getBarcode()));
+                        setTotalPriceTextLabel();
+                        hasInList = true;
+                    }
+                }
+                if (!hasInList) {
+                    PreparedStatement newSt = null;
+                    try {
+                        newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
+                        newSt.setString(1, barCodeToAdd.getText());
+                        ResultSet rs = newSt.executeQuery();
+                        if (rs.next()) {
+                            String description = rs.getNString(4);
+                            Float price = rs.getFloat(10);
+                            model.addElement(new ItemObject(description, String.valueOf(price), null, 1, barCodeToAdd.getText()));
+                            setTotalPriceTextLabel();
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         barCodeToAdd.requestFocus();
         barCodeToAdd.setText("");
+    }
+
+    private void setTotalPriceTextLabel() {
+        float price = 0;
+        for(int i = 0; i < model.size(); i++) {
+            price += (Float.valueOf(((ItemObject)model.getElementAt(i)).getPrice()) * ((ItemObject)model.getElementAt(i)).getQuantity());
+        }
+        totalPriceText = price;
+        totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
+        salePanel.validate();
+    }
+
+    private void setCategoryCombo() throws SQLException {
+        PreparedStatement newSt = st.getConnection().prepareStatement("SELECT * FROM category");
+        ResultSet rs = newSt.executeQuery();
+        ArrayList<String> categories = new ArrayList<>();
+        categories.add("Nova categoria...");
+        while (rs.next()) {
+            categories.add(rs.getString("category"));
+        }
+        categories.add("Excluir categoria...");
+        categoryCombo.setModel(new DefaultComboBoxModel(categories.toArray(new String[categories.size()])));
+    }
+
+    private void setTrademarkCombo() throws SQLException {
+        PreparedStatement newSt = st.getConnection().prepareStatement("SELECT * FROM trademark");
+        ResultSet rs = newSt.executeQuery();
+        ArrayList<String> trademarks = new ArrayList<>();
+        trademarks.add("Nova marca...");
+        while (rs.next()) {
+            trademarks.add(rs.getString("trademark"));
+        }
+        trademarks.add("Excluir marca...");
+        trademarkCombo.setModel(new DefaultComboBoxModel(trademarks.toArray(new String[trademarks.size()])));
     }
 
     public static void main(String args[]) {
@@ -483,8 +609,12 @@ public class Main extends javax.swing.JFrame {
     private java.awt.Label weigth;
     private java.awt.TextField weigthText;
     private DefaultListModel model = new DefaultListModel();
-    private ArrayList<String> items = new ArrayList<>();
     private Statement st;
     private Float totalPriceText = (float) 0;
 
+    /*
+    https://www.youtube.com/watch?v=VHd29F_Tk04
+    https://stackoverflow.com/questions/3775373/java-how-to-add-image-to-jlabel?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+    https://stackoverflow.com/questions/36492084/how-to-convert-an-image-to-base64-string-in-java?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+    */
 }
