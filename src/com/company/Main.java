@@ -2,16 +2,12 @@ package com.company;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.ImageObserver;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Main extends javax.swing.JFrame {
 
@@ -107,9 +103,9 @@ public class Main extends javax.swing.JFrame {
 
         addToDb.setFont(new java.awt.Font("Arial", Font.PLAIN, 18)); // NOI18N
         addToDb.setText("Salvar");
-        addToDb.addActionListener(this::addToDbActionPerformed);
+        addToDb.addActionListener(actionEvent -> addToDbActionPerformed());
 
-        photo.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        photo.setFont(new java.awt.Font("Arial", Font.PLAIN, 12)); // NOI18N
         photo.setText(" Adicionar uma foto...");
         photo.setToolTipText("");
         photo.setFocusable(true);
@@ -118,20 +114,21 @@ public class Main extends javax.swing.JFrame {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 JFileChooser jf = new JFileChooser();
                 int result = jf.showSaveDialog(null);
-                if(result == JFileChooser.APPROVE_OPTION) {
+                if (result == JFileChooser.APPROVE_OPTION) {
                     try {
                         FileInputStream fileInputStreamReader = new FileInputStream(jf.getSelectedFile());
-                        byte[] bytes = new byte[(int)jf.getSelectedFile().length()];
+                        byte[] bytes = new byte[(int) jf.getSelectedFile().length()];
+                        //noinspection ResultOfMethodCallIgnored
                         fileInputStreamReader.read(bytes);
                         int width = new ImageIcon(jf.getSelectedFile().getAbsolutePath()).getImage().getWidth(null);
                         int height = new ImageIcon(jf.getSelectedFile().getAbsolutePath()).getImage().getHeight(null);
                         int greater;
-                        if(width > height) greater = width;
+                        if (width > height) greater = width;
                         else greater = height;
                         photo.setText("                                      ");
                         photo.setName(Base64.getEncoder().encodeToString(bytes));
                         photo.setIcon(new ImageIcon(new ImageIcon(jf.getSelectedFile().getAbsolutePath()).getImage()
-                                .getScaledInstance((int)(photo.getWidth()*((float)width/(float)greater)), (int)(photo.getHeight()*((float)height/(float)greater)), Image.SCALE_SMOOTH)));
+                                .getScaledInstance((int) (photo.getWidth() * ((float) width / (float) greater)), (int) (photo.getHeight() * ((float) height / (float) greater)), Image.SCALE_SMOOTH)));
                         photo.setHorizontalTextPosition(JLabel.CENTER);
                         photo.setVerticalTextPosition(JLabel.CENTER);
                     } catch (Exception e) {
@@ -144,10 +141,10 @@ public class Main extends javax.swing.JFrame {
         try {
             setTrademarkCombo();
             trademarkCombo.addActionListener(actionEvent -> {
-                if(trademarkCombo.getSelectedIndex() == 0) {
+                if (trademarkCombo.getSelectedIndex() == 0) {
                     String marca = JOptionPane.showInputDialog(null, "Marca: ", "Inserir marca", JOptionPane.QUESTION_MESSAGE);
                     try {
-                        if(marca != null) {
+                        if (marca != null) {
                             PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO trademark (trademark) VALUES (?)");
                             novoSt.setString(1, marca);
                             novoSt.executeUpdate();
@@ -157,14 +154,14 @@ public class Main extends javax.swing.JFrame {
                         e.printStackTrace();
                         JOptionPane.showMessageDialog(null, "Marca já cadastrada");
                     }
-                } else if(trademarkCombo.getSelectedIndex() == trademarkCombo.getItemCount() - 1) {
+                } else if (trademarkCombo.getSelectedIndex() == trademarkCombo.getItemCount() - 1) {
                     String marca = JOptionPane.showInputDialog(null, "Marca: ", "Excluir marca", JOptionPane.QUESTION_MESSAGE);
                     try {
                         PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM trademark WHERE trademark = ?");
                         novoSt.setString(1, marca);
                         novoSt.executeUpdate();
                         setTrademarkCombo();
-                    } catch (SQLException e) {
+                    } catch (SQLException ignored) {
                     }
                 } else {
                     trademarkCombo.transferFocus();
@@ -177,10 +174,10 @@ public class Main extends javax.swing.JFrame {
         try {
             setCategoryCombo();
             categoryCombo.addActionListener(actionEvent -> {
-                if(categoryCombo.getSelectedIndex() == 0) {
+                if (categoryCombo.getSelectedIndex() == 0) {
                     String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Inserir categoria", JOptionPane.QUESTION_MESSAGE);
                     try {
-                        if(marca != null) {
+                        if (marca != null) {
                             PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO category (category) VALUES (?)");
                             novoSt.setString(1, marca);
                             novoSt.executeUpdate();
@@ -189,7 +186,7 @@ public class Main extends javax.swing.JFrame {
                     } catch (SQLException e) {
                         JOptionPane.showMessageDialog(null, "Categoria já cadastrada");
                     }
-                } else if(categoryCombo.getSelectedIndex() == categoryCombo.getItemCount() - 1) {
+                } else if (categoryCombo.getSelectedIndex() == categoryCombo.getItemCount() - 1) {
                     String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Excluir categoria", JOptionPane.QUESTION_MESSAGE);
                     try {
                         PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM category WHERE category = ?");
@@ -365,10 +362,10 @@ public class Main extends javax.swing.JFrame {
         itemList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                if(mouseEvent.getClickCount() == 2) {
+                if (mouseEvent.getClickCount() == 2) {
                     String quantidade = JOptionPane.showInputDialog(null, "Quantidade: ", "Atualizar quantidade", JOptionPane.QUESTION_MESSAGE);
-                    if(quantidade != null) {
-                        ItemObject itemObject = (ItemObject) model.getElementAt(itemList.getSelectedIndex());
+                    if (quantidade != null) {
+                        ItemObject itemObject = model.getElementAt(itemList.getSelectedIndex());
                         model.set(itemList.getSelectedIndex(), new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
                                 Float.valueOf(quantidade.replace(",", ".")), itemObject.getBarcode()));
                         setTotalPriceTextLabel();
@@ -468,7 +465,7 @@ public class Main extends javax.swing.JFrame {
         itemList.setModel(model);
     }
 
-    private void addToDbActionPerformed(java.awt.event.ActionEvent evt) {
+    private void addToDbActionPerformed() {
         try {
             PreparedStatement newSt = st.getConnection().prepareStatement("INSERT INTO stock (barcode, color, start, " +
                     "description, category, weight, trademark, meters, location," +
@@ -482,7 +479,8 @@ public class Main extends javax.swing.JFrame {
             newSt.setString(7, String.valueOf(trademarkCombo.getSelectedItem()));
             newSt.setInt(8, Integer.valueOf(metersText.getText()));
             newSt.setString(9, localizationText.getText());
-            if(priceText.getText().contains(",")) newSt.setFloat(10, Float.valueOf(priceText.getText().replace(",", ".")));
+            if (priceText.getText().contains(","))
+                newSt.setFloat(10, Float.valueOf(priceText.getText().replace(",", ".")));
             else newSt.setFloat(10, Float.valueOf(priceText.getText()));
             newSt.setInt(11, Integer.valueOf(quantityText.getText()));
             newSt.setString(12, observationText.getText());
@@ -495,12 +493,12 @@ public class Main extends javax.swing.JFrame {
 
     private void confirmPurchase() {
         try {
-            if(model.size() > 0) {
+            if (model.size() > 0) {
                 PreparedStatement newSt = st.getConnection().prepareStatement("UPDATE stock SET quantity = ((SELECT quantity FROM stock WHERE barcode = ? LIMIT 1) - ?) WHERE barcode = ?");
                 for (int i = 0; i < model.size(); i++) {
-                    newSt.setString(1, ((ItemObject) model.getElementAt(i)).getBarcode());
-                    newSt.setFloat(2, ((ItemObject) model.getElementAt(i)).getQuantity());
-                    newSt.setString(3, ((ItemObject) model.getElementAt(i)).getBarcode());
+                    newSt.setString(1, (model.getElementAt(i)).getBarcode());
+                    newSt.setFloat(2, (model.getElementAt(i)).getQuantity());
+                    newSt.setString(3, (model.getElementAt(i)).getBarcode());
                     newSt.executeUpdate();
                 }
                 model.removeAllElements();
@@ -525,16 +523,16 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void insertItemIntoList() {
-        if(!barCodeToAdd.getText().equals("") && barCodeToAdd.getText() != null) {
+        if (!barCodeToAdd.getText().equals("") && barCodeToAdd.getText() != null) {
             if (barCodeToAdd.getText().charAt(0) == 'x') {
-                if(model.size() > 0) {
+                if (model.size() > 0) {
                     int selected = itemList.getSelectedIndex();
                     if (selected >= 0) {
                         if (Integer.valueOf(barCodeToAdd.getText().replace("x", "")) == 0) {
                             model.remove(selected);
                             setTotalPriceTextLabel();
                         } else {
-                            ItemObject itemObject = (ItemObject) model.getElementAt(selected);
+                            ItemObject itemObject = model.getElementAt(selected);
                             model.set(selected, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
                                     Float.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
                             setTotalPriceTextLabel();
@@ -544,7 +542,7 @@ public class Main extends javax.swing.JFrame {
                             model.remove(model.indexOf(model.lastElement()));
                             setTotalPriceTextLabel();
                         } else {
-                            ItemObject itemObject = (ItemObject) model.lastElement();
+                            ItemObject itemObject = model.lastElement();
                             model.set(model.indexOf(itemObject), new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
                                     Float.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
                             setTotalPriceTextLabel();
@@ -554,7 +552,7 @@ public class Main extends javax.swing.JFrame {
             } else {
                 boolean hasInList = false;
                 for (int i = 0; i < model.size(); i++) {
-                    ItemObject itemObject = (ItemObject) model.getElementAt(i);
+                    ItemObject itemObject = model.getElementAt(i);
                     if (itemObject.getBarcode().equals(barCodeToAdd.getText())) {
                         model.set(i, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(), itemObject.getQuantity() + 1, itemObject.getBarcode()));
                         setTotalPriceTextLabel();
@@ -562,16 +560,15 @@ public class Main extends javax.swing.JFrame {
                     }
                 }
                 if (!hasInList) {
-                    PreparedStatement newSt = null;
                     try {
-                        newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
+                        PreparedStatement newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
                         newSt.setString(1, barCodeToAdd.getText());
                         ResultSet rs = newSt.executeQuery();
                         if (rs.next()) {
                             String description = rs.getNString(4);
                             Float price = rs.getFloat(10);
                             String imageBase64 = rs.getString(13);
-                            model.addElement(new ItemObject(description, String.valueOf(price), imageBase64, (float)1, barCodeToAdd.getText()));
+                            model.addElement(new ItemObject(description, String.valueOf(price), imageBase64, (float) 1, barCodeToAdd.getText()));
                             setTotalPriceTextLabel();
                         } else {
                             JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
@@ -588,8 +585,8 @@ public class Main extends javax.swing.JFrame {
 
     private void setTotalPriceTextLabel() {
         float price = 0;
-        for(int i = 0; i < model.size(); i++) {
-            price += (Float.valueOf(((ItemObject)model.getElementAt(i)).getPrice()) * ((ItemObject)model.getElementAt(i)).getQuantity());
+        for (int i = 0; i < model.size(); i++) {
+            price += (Float.valueOf((model.getElementAt(i)).getPrice()) * (model.getElementAt(i)).getQuantity());
         }
         totalPriceText = price;
         totalPrice.setText(String.format("%.02f", totalPriceText).replace(".", ","));
@@ -605,7 +602,7 @@ public class Main extends javax.swing.JFrame {
             categories.add(rs.getString("category"));
         }
         categories.add("Excluir categoria...");
-        categoryCombo.setModel(new DefaultComboBoxModel(categories.toArray(new String[categories.size()])));
+        categoryCombo.setModel(new DefaultComboBoxModel(categories.toArray(new String[0])));
     }
 
     private void setTrademarkCombo() throws SQLException {
@@ -617,11 +614,11 @@ public class Main extends javax.swing.JFrame {
             trademarks.add(rs.getString("trademark"));
         }
         trademarks.add("Excluir marca...");
-        trademarkCombo.setModel(new DefaultComboBoxModel(trademarks.toArray(new String[trademarks.size()])));
+        trademarkCombo.setModel(new DefaultComboBoxModel(trademarks.toArray(new String[0])));
     }
 
     private void deleteItemFromList() {
-        if(itemList.getSelectedIndex() >= 0) {
+        if (itemList.getSelectedIndex() >= 0) {
             model.remove(itemList.getSelectedIndex());
             setTotalPriceTextLabel();
         }
@@ -648,7 +645,7 @@ public class Main extends javax.swing.JFrame {
     private java.awt.TextField barCodeToAdd;
     private javax.swing.JButton cancel;
     private java.awt.Label category;
-    private javax.swing.JComboBox categoryCombo;
+    private javax.swing.JComboBox<DefaultComboBoxModel> categoryCombo;
     private java.awt.Label start;
     private java.awt.TextField startText;
     private javax.swing.JButton confirm;
@@ -675,11 +672,11 @@ public class Main extends javax.swing.JFrame {
     private java.awt.Label total;
     private java.awt.Label totalPrice;
     private java.awt.Label trademark;
-    private javax.swing.JComboBox trademarkCombo;
+    private javax.swing.JComboBox<DefaultComboBoxModel> trademarkCombo;
     private java.awt.Label weigth;
     private java.awt.TextField weigthText;
     private javax.swing.JLabel photo;
-    private DefaultListModel model = new DefaultListModel();
+    private DefaultListModel<ItemObject> model = new DefaultListModel<>();
     private Statement st;
     private Float totalPriceText = (float) 0;
 }
