@@ -2,10 +2,8 @@ package com.company;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import java.awt.event.*;
+import java.awt.image.ImageObserver;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.sql.*;
@@ -79,6 +77,7 @@ public class Main extends javax.swing.JFrame {
         total = new java.awt.Label();
         totalPrice = new java.awt.Label();
         photo = new javax.swing.JLabel();
+        delete = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -124,9 +123,17 @@ public class Main extends javax.swing.JFrame {
                         FileInputStream fileInputStreamReader = new FileInputStream(jf.getSelectedFile());
                         byte[] bytes = new byte[(int)jf.getSelectedFile().length()];
                         fileInputStreamReader.read(bytes);
-                        photo.setText(Base64.getEncoder().encodeToString(bytes));
+                        int width = new ImageIcon(jf.getSelectedFile().getAbsolutePath()).getImage().getWidth(null);
+                        int height = new ImageIcon(jf.getSelectedFile().getAbsolutePath()).getImage().getHeight(null);
+                        int greater;
+                        if(width > height) greater = width;
+                        else greater = height;
+                        photo.setText("                                      ");
+                        photo.setName(Base64.getEncoder().encodeToString(bytes));
                         photo.setIcon(new ImageIcon(new ImageIcon(jf.getSelectedFile().getAbsolutePath()).getImage()
-                                .getScaledInstance(photo.getWidth(), photo.getHeight(), Image.SCALE_AREA_AVERAGING)));
+                                .getScaledInstance((int)(photo.getWidth()*((float)width/(float)greater)), (int)(photo.getHeight()*((float)height/(float)greater)), Image.SCALE_SMOOTH)));
+                        photo.setHorizontalTextPosition(JLabel.CENTER);
+                        photo.setVerticalTextPosition(JLabel.CENTER);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -274,12 +281,11 @@ public class Main extends javax.swing.JFrame {
                                                                 .addGap(91, 91, 91)
                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, stockPanelLayout.createSequentialGroup()
-                                                                                .addGap(0, 1, Short.MAX_VALUE)
                                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                                                         .addComponent(start, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                                                         .addGroup(stockPanelLayout.createSequentialGroup()
                                                                                                 .addComponent(color, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                                                                 .addComponent(colorText, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))))
                                                                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, stockPanelLayout.createSequentialGroup()
                                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -356,10 +362,27 @@ public class Main extends javax.swing.JFrame {
         tabs.addTab("Estoque", stockPanel);
 
         itemList.setFont(new java.awt.Font("Arial", Font.PLAIN, 24)); // NOI18N
+        itemList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                if(mouseEvent.getClickCount() == 2) {
+                    String quantidade = JOptionPane.showInputDialog(null, "Quantidade: ", "Atualizar quantidade", JOptionPane.QUESTION_MESSAGE);
+                    if(quantidade != null) {
+                        ItemObject itemObject = (ItemObject) model.getElementAt(itemList.getSelectedIndex());
+                        model.set(itemList.getSelectedIndex(), new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
+                                Float.valueOf(quantidade.replace(",", ".")), itemObject.getBarcode()));
+                        setTotalPriceTextLabel();
+                    }
+                }
+            }
+        });
         jScrollPane1.setViewportView(itemList);
 
         confirm.setText("Confirmar");
         confirm.addActionListener(actionEvent -> confirmPurchase());
+
+        delete.setText("Exluir item");
+        delete.addActionListener(actionEvent -> deleteItemFromList());
 
         cancel.setText("Cancelar");
         cancel.addActionListener(actionEvent -> clearList());
@@ -383,6 +406,8 @@ public class Main extends javax.swing.JFrame {
                         .addGroup(salePanelLayout.createSequentialGroup()
                                 .addGroup(salePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, salePanelLayout.createSequentialGroup()
+                                                .addContainerGap()
+                                                .addComponent(delete)
                                                 .addGap(0, 0, Short.MAX_VALUE)
                                                 .addComponent(cancel)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -415,7 +440,8 @@ public class Main extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(salePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(confirm)
-                                        .addComponent(cancel))
+                                        .addComponent(cancel)
+                                        .addComponent(delete))
                                 .addContainerGap())
         );
 
@@ -460,7 +486,7 @@ public class Main extends javax.swing.JFrame {
             else newSt.setFloat(10, Float.valueOf(priceText.getText()));
             newSt.setInt(11, Integer.valueOf(quantityText.getText()));
             newSt.setString(12, observationText.getText());
-            newSt.setString(13, photo.getText());
+            newSt.setString(13, photo.getName());
             newSt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -473,7 +499,7 @@ public class Main extends javax.swing.JFrame {
                 PreparedStatement newSt = st.getConnection().prepareStatement("UPDATE stock SET quantity = ((SELECT quantity FROM stock WHERE barcode = ? LIMIT 1) - ?) WHERE barcode = ?");
                 for (int i = 0; i < model.size(); i++) {
                     newSt.setString(1, ((ItemObject) model.getElementAt(i)).getBarcode());
-                    newSt.setInt(2, ((ItemObject) model.getElementAt(i)).getQuantity());
+                    newSt.setFloat(2, ((ItemObject) model.getElementAt(i)).getQuantity());
                     newSt.setString(3, ((ItemObject) model.getElementAt(i)).getBarcode());
                     newSt.executeUpdate();
                 }
@@ -510,17 +536,17 @@ public class Main extends javax.swing.JFrame {
                         } else {
                             ItemObject itemObject = (ItemObject) model.getElementAt(selected);
                             model.set(selected, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
-                                    Integer.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
+                                    Float.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
                             setTotalPriceTextLabel();
                         }
                     } else {
-                        if (Integer.valueOf(barCodeToAdd.getText().replace("x", "")) == 0) {
+                        if (Float.valueOf(barCodeToAdd.getText().replace("x", "")) == 0) {
                             model.remove(model.indexOf(model.lastElement()));
                             setTotalPriceTextLabel();
                         } else {
                             ItemObject itemObject = (ItemObject) model.lastElement();
                             model.set(model.indexOf(itemObject), new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
-                                    Integer.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
+                                    Float.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
                             setTotalPriceTextLabel();
                         }
                     }
@@ -544,7 +570,8 @@ public class Main extends javax.swing.JFrame {
                         if (rs.next()) {
                             String description = rs.getNString(4);
                             Float price = rs.getFloat(10);
-                            model.addElement(new ItemObject(description, String.valueOf(price), null, 1, barCodeToAdd.getText()));
+                            String imageBase64 = rs.getString(13);
+                            model.addElement(new ItemObject(description, String.valueOf(price), imageBase64, (float)1, barCodeToAdd.getText()));
                             setTotalPriceTextLabel();
                         } else {
                             JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
@@ -593,6 +620,13 @@ public class Main extends javax.swing.JFrame {
         trademarkCombo.setModel(new DefaultComboBoxModel(trademarks.toArray(new String[trademarks.size()])));
     }
 
+    private void deleteItemFromList() {
+        if(itemList.getSelectedIndex() >= 0) {
+            model.remove(itemList.getSelectedIndex());
+            setTotalPriceTextLabel();
+        }
+    }
+
     public static void main(String args[]) {
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
@@ -618,6 +652,7 @@ public class Main extends javax.swing.JFrame {
     private java.awt.Label start;
     private java.awt.TextField startText;
     private javax.swing.JButton confirm;
+    private javax.swing.JButton delete;
     private java.awt.Label description;
     private java.awt.TextField descriptionText;
     private javax.swing.JList itemList;
@@ -647,10 +682,4 @@ public class Main extends javax.swing.JFrame {
     private DefaultListModel model = new DefaultListModel();
     private Statement st;
     private Float totalPriceText = (float) 0;
-
-    /*
-    https://www.youtube.com/watch?v=VHd29F_Tk04
-    https://stackoverflow.com/questions/3775373/java-how-to-add-image-to-jlabel?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
-    https://stackoverflow.com/questions/36492084/how-to-convert-an-image-to-base64-string-in-java?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
-    */
 }

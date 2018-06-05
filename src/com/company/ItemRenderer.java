@@ -18,7 +18,9 @@ public class ItemRenderer extends JPanel implements ListCellRenderer<ItemObject>
         lbPrice.setFont(new java.awt.Font("Arial", Font.PLAIN, 28)); // NOI18N
         lbQuantity.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
 
-        lbIcon.setBounds(0,0, 20,20);
+        lbIcon.setMinimumSize(new Dimension(60,60));
+        lbIcon.setPreferredSize(new Dimension(60,60));
+        lbIcon.setMaximumSize(new Dimension(60,60));
         setLayout(new BorderLayout(2, 20));
 
         panelText.add(lbName, BorderLayout.WEST);
@@ -32,7 +34,17 @@ public class ItemRenderer extends JPanel implements ListCellRenderer<ItemObject>
     public Component getListCellRendererComponent(JList<? extends ItemObject> list, ItemObject itemObject, int i, boolean b, boolean b1) {
         try {
             if(itemObject.getImage() != null) {
-                lbIcon.setIcon(new ImageIcon(ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(itemObject.getImage())))));
+                int width = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(itemObject.getImage()))).getWidth(null);
+                int height = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(itemObject.getImage()))).getHeight(null);
+                int greater;
+                if(width > height) greater = width;
+                else greater = height;
+
+                lbIcon.setIcon(new ImageIcon(ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(itemObject.getImage())))
+                        .getScaledInstance((int)(60*((float)width/(float)greater)), (int)(60*((float)height/(float)greater)), Image.SCALE_SMOOTH)));
+
+                lbIcon.setHorizontalTextPosition(JLabel.CENTER);
+                lbIcon.setVerticalTextPosition(JLabel.CENTER);
             }
         } catch (IOException e) {
             e.printStackTrace();

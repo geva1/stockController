@@ -4,10 +4,10 @@ public class ItemObject {
     private String name;
     private String price;
     private String image;
-    private Integer quantity;
+    private Float quantity;
     private String barcode;
 
-    public ItemObject(String name, String price, String image, Integer quantity, String barcode) {
+    public ItemObject(String name, String price, String image, Float quantity, String barcode) {
         this.name = name;
         this.price = price;
         this.image = image;
@@ -42,11 +42,11 @@ public class ItemObject {
         this.image = image;
     }
 
-    public Integer getQuantity() {
+    public Float getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(Integer quantity) {
+    public void setQuantity(Float quantity) {
         this.quantity = quantity;
     }
 
