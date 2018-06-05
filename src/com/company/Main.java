@@ -4,9 +4,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main extends javax.swing.JFrame {
 
@@ -16,7 +23,7 @@ public class Main extends javax.swing.JFrame {
             st = DriverManager.getConnection("jdbc:h2:./stockDBFiles/stockDB", "test", "test").createStatement();
             st.execute("CREATE TABLE stock(barcode varchar(25) NOT NULL PRIMARY KEY, color varchar(25), start varchar(50), description varchar(255) NOT NULL, " +
                     "category varchar(25), weight integer, trademark varchar(25), meters integer, location varchar(25), price float NOT NULL, " +
-                    "quantity integer NOT NULL, observation varchar(255))");
+                    "quantity float NOT NULL, observation varchar(255), image text)");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (SQLException ignored) {
@@ -71,6 +78,7 @@ public class Main extends javax.swing.JFrame {
         addToList = new javax.swing.JButton();
         total = new java.awt.Label();
         totalPrice = new java.awt.Label();
+        photo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -98,9 +106,33 @@ public class Main extends javax.swing.JFrame {
 
         trademark.setText("Marca");
 
-        addToDb.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 18)); // NOI18N
+        addToDb.setFont(new java.awt.Font("Arial", Font.PLAIN, 18)); // NOI18N
         addToDb.setText("Salvar");
         addToDb.addActionListener(this::addToDbActionPerformed);
+
+        photo.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        photo.setText(" Adicionar uma foto...");
+        photo.setToolTipText("");
+        photo.setFocusable(true);
+        photo.setBorder(BorderFactory.createLineBorder(Color.black));
+        photo.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                JFileChooser jf = new JFileChooser();
+                int result = jf.showSaveDialog(null);
+                if(result == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        FileInputStream fileInputStreamReader = new FileInputStream(jf.getSelectedFile());
+                        byte[] bytes = new byte[(int)jf.getSelectedFile().length()];
+                        fileInputStreamReader.read(bytes);
+                        photo.setText(Base64.getEncoder().encodeToString(bytes));
+                        photo.setIcon(new ImageIcon(new ImageIcon(jf.getSelectedFile().getAbsolutePath()).getImage()
+                                .getScaledInstance(photo.getWidth(), photo.getHeight(), Image.SCALE_AREA_AVERAGING)));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
 
         try {
             setTrademarkCombo();
@@ -256,7 +288,8 @@ public class Main extends javax.swing.JFrame {
                                                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                                                         .addComponent(metersText, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                                        .addComponent(weigthText, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))))))))
+                                                                                        .addComponent(weigthText, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)))))))
+                                        .addComponent(photo, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addContainerGap())
         );
         stockPanelLayout.setVerticalGroup(
@@ -315,7 +348,8 @@ public class Main extends javax.swing.JFrame {
                                                 .addComponent(addToDb, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE))
                                         .addGroup(stockPanelLayout.createSequentialGroup()
                                                 .addComponent(observationText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addComponent(photo, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addContainerGap())
         );
 
@@ -412,7 +446,7 @@ public class Main extends javax.swing.JFrame {
         try {
             PreparedStatement newSt = st.getConnection().prepareStatement("INSERT INTO stock (barcode, color, start, " +
                     "description, category, weight, trademark, meters, location," +
-                    "price, quantity, observation) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+                    "price, quantity, observation, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
             newSt.setString(1, barCodeText.getText());
             newSt.setString(2, colorText.getText());
             newSt.setString(3, startText.getText());
@@ -426,6 +460,7 @@ public class Main extends javax.swing.JFrame {
             else newSt.setFloat(10, Float.valueOf(priceText.getText()));
             newSt.setInt(11, Integer.valueOf(quantityText.getText()));
             newSt.setString(12, observationText.getText());
+            newSt.setString(13, photo.getText());
             newSt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -561,7 +596,7 @@ public class Main extends javax.swing.JFrame {
     public static void main(String args[]) {
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
+                if ("Windows".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
@@ -608,6 +643,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JComboBox trademarkCombo;
     private java.awt.Label weigth;
     private java.awt.TextField weigthText;
+    private javax.swing.JLabel photo;
     private DefaultListModel model = new DefaultListModel();
     private Statement st;
     private Float totalPriceText = (float) 0;
