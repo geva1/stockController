@@ -2,11 +2,8 @@ package com.company;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.event.CellEditorListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -16,7 +13,6 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.EventObject;
 
 public class Main extends javax.swing.JFrame {
 
@@ -51,26 +47,26 @@ public class Main extends javax.swing.JFrame {
         startText = new java.awt.TextField();
         colorText = new java.awt.TextField();
         descriptionText = new java.awt.TextField();
-        barCode = new java.awt.Label();
-        start = new java.awt.Label();
-        color = new java.awt.Label();
-        description = new java.awt.Label();
-        category = new java.awt.Label();
-        trademark = new java.awt.Label();
+        Label barCode = new Label();
+        Label start = new Label();
+        Label color = new Label();
+        Label description = new Label();
+        Label category = new Label();
+        Label trademark = new Label();
         addToDb = new javax.swing.JButton();
         categoryCombo = new javax.swing.JComboBox();
         trademarkCombo = new javax.swing.JComboBox();
-        localization = new java.awt.Label();
-        price = new java.awt.Label();
-        weigth = new java.awt.Label();
-        meters = new java.awt.Label();
-        observations = new java.awt.Label();
+        Label localization = new Label();
+        Label price = new Label();
+        Label weigth = new Label();
+        Label meters = new Label();
+        Label observations = new Label();
         weigthText = new java.awt.TextField();
         metersText = new java.awt.TextField();
         localizationText = new java.awt.TextField();
         priceText = new java.awt.TextField();
         observationText = new java.awt.TextField();
-        quantity = new java.awt.Label();
+        Label quantity = new Label();
         quantityText = new java.awt.TextField();
         salePanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -88,6 +84,7 @@ public class Main extends javax.swing.JFrame {
         addToStock = new javax.swing.JButton();
         editItem = new javax.swing.JButton();
         deleteItem = new javax.swing.JButton();
+        cancelUpdate = new javax.swing.JButton();
         stockTable = new javax.swing.JTable() {
             public Class getColumnClass(int column) {
                 return (column == 0) ? Icon.class : Object.class;
@@ -125,6 +122,34 @@ public class Main extends javax.swing.JFrame {
         addToDb.setText("Salvar");
         addToDb.addActionListener(actionEvent -> addToDbActionPerformed());
 
+        cancelUpdate.setVisible(false);
+        cancelUpdate.setFont(new java.awt.Font("Arial", Font.PLAIN, 18)); // NOI18N
+        cancelUpdate.setText("Cancelar");
+        cancelUpdate.addActionListener(actionEvent -> {
+            categoryCombo.removeActionListener(categoryListener);
+            trademarkCombo.removeActionListener(trademarkListener);
+            isEdit = false;
+            cancelUpdate.setVisible(false);
+            barCodeText.setText("");
+            colorText.setText("");
+            startText.setText("");
+            descriptionText.setText("");
+            categoryCombo.setSelectedIndex(0);
+            weigthText.setText("");
+            trademarkCombo.setSelectedIndex(0);
+            metersText.setText("");
+            localizationText.setText("");
+            priceText.setText("");
+            quantityText.setText("");
+            observationText.setText("");
+            photo.setText("Adicionar uma foto...");
+            photo.setName("");
+            photo.setIcon(null);
+            photo.revalidate();
+            categoryCombo.addActionListener(categoryListener);
+            trademarkCombo.addActionListener(trademarkListener);
+        });
+
         photo.setFont(new java.awt.Font("Arial", Font.PLAIN, 12)); // NOI18N
         photo.setText("Adicionar uma foto...");
         photo.setToolTipText("");
@@ -161,66 +186,14 @@ public class Main extends javax.swing.JFrame {
 
         try {
             setTrademarkCombo();
-            trademarkCombo.addActionListener(actionEvent -> {
-                if (trademarkCombo.getSelectedIndex() == 0) {
-                    String marca = JOptionPane.showInputDialog(null, "Marca: ", "Inserir marca", JOptionPane.QUESTION_MESSAGE);
-                    try {
-                        if (marca != null) {
-                            PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO trademark (trademark) VALUES (?)");
-                            novoSt.setString(1, marca);
-                            novoSt.executeUpdate();
-                            setTrademarkCombo();
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                        JOptionPane.showMessageDialog(null, "Marca já cadastrada");
-                    }
-                } else if (trademarkCombo.getSelectedIndex() == trademarkCombo.getItemCount() - 1) {
-                    String marca = JOptionPane.showInputDialog(null, "Marca: ", "Excluir marca", JOptionPane.QUESTION_MESSAGE);
-                    try {
-                        PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM trademark WHERE trademark = ?");
-                        novoSt.setString(1, marca);
-                        novoSt.executeUpdate();
-                        setTrademarkCombo();
-                    } catch (SQLException ignored) {
-                    }
-                } else {
-                    trademarkCombo.transferFocus();
-                }
-            });
+            trademarkCombo.addActionListener(trademarkListener);
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
         try {
             setCategoryCombo();
-            categoryCombo.addActionListener(actionEvent -> {
-                if (categoryCombo.getSelectedIndex() == 0) {
-                    String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Inserir categoria", JOptionPane.QUESTION_MESSAGE);
-                    try {
-                        if (marca != null) {
-                            PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO category (category) VALUES (?)");
-                            novoSt.setString(1, marca);
-                            novoSt.executeUpdate();
-                            setCategoryCombo();
-                        }
-                    } catch (SQLException e) {
-                        JOptionPane.showMessageDialog(null, "Categoria já cadastrada");
-                    }
-                } else if (categoryCombo.getSelectedIndex() == categoryCombo.getItemCount() - 1) {
-                    String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Excluir categoria", JOptionPane.QUESTION_MESSAGE);
-                    try {
-                        PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM category WHERE category = ?");
-                        novoSt.setString(1, marca);
-                        novoSt.executeUpdate();
-                        setCategoryCombo();
-                    } catch (SQLException e) {
-                        JOptionPane.showMessageDialog(null, "Categoria não existente");
-                    }
-                } else {
-                    categoryCombo.transferFocus();
-                }
-            });
+            categoryCombo.addActionListener(categoryListener);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -249,6 +222,7 @@ public class Main extends javax.swing.JFrame {
 
         quantityText.addActionListener(evt -> quantityText.transferFocus());
 
+        editItem.setText("Editar...");
         editItem.addActionListener(actionEvent -> editItemAction());
 
         tableModel.setColumnIdentifiers(new String[]{
@@ -275,7 +249,7 @@ public class Main extends javax.swing.JFrame {
         stockTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                if(mouseEvent.getClickCount() == 2 && stockTable.getSelectedRow() != -1) {
+                if (mouseEvent.getClickCount() == 2 && stockTable.getSelectedRow() != -1) {
                     editItemAction();
                 }
             }
@@ -320,7 +294,10 @@ public class Main extends javax.swing.JFrame {
                                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, stockPanelLayout.createSequentialGroup()
                                                 .addGap(0, 0, Short.MAX_VALUE)
                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                        .addComponent(addToDb, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                        .addGroup(stockPanelLayout.createSequentialGroup()
+                                                                .addComponent(cancelUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                .addGap(15, 15, 15)
+                                                                .addComponent(addToDb, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE))
                                                         .addComponent(startText, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                         .addGroup(stockPanelLayout.createSequentialGroup()
                                                 .addComponent(description, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -429,7 +406,9 @@ public class Main extends javax.swing.JFrame {
                                         .addGroup(stockPanelLayout.createSequentialGroup()
                                                 .addComponent(observations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 139, Short.MAX_VALUE)
-                                                .addComponent(addToDb, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addComponent(addToDb, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                        .addComponent(cancelUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                         .addGroup(stockPanelLayout.createSequentialGroup()
                                                 .addComponent(observationText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addGap(0, 0, Short.MAX_VALUE)
@@ -553,6 +532,16 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void addToDbActionPerformed() {
+        if (isEdit) {
+            try {
+                PreparedStatement del = st.getConnection().prepareStatement("DELETE FROM stock WHERE barcode = ?");
+                del.setString(1, barCodeText.getText());
+                del.executeUpdate();
+                isEdit = false;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         try {
             PreparedStatement newSt = st.getConnection().prepareStatement("INSERT INTO stock (barcode, color, start, " +
                     "description, category, weight, trademark, meters, location," +
@@ -562,14 +551,14 @@ public class Main extends javax.swing.JFrame {
             newSt.setString(3, startText.getText());
             newSt.setString(4, descriptionText.getText());
             newSt.setString(5, String.valueOf(categoryCombo.getSelectedItem()));
-            newSt.setInt(6, Integer.valueOf(weigthText.getText()));
+            newSt.setFloat(6, Float.valueOf(weigthText.getText()));
             newSt.setString(7, String.valueOf(trademarkCombo.getSelectedItem()));
             newSt.setInt(8, Integer.valueOf(metersText.getText()));
             newSt.setString(9, localizationText.getText());
             if (priceText.getText().contains(","))
                 newSt.setFloat(10, Float.valueOf(priceText.getText().replace(",", ".")));
             else newSt.setFloat(10, Float.valueOf(priceText.getText()));
-            newSt.setInt(11, Integer.valueOf(quantityText.getText()));
+            newSt.setFloat(11, Float.valueOf(quantityText.getText()));
             newSt.setString(12, observationText.getText());
             newSt.setString(13, photo.getName());
             newSt.executeUpdate();
@@ -749,7 +738,101 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void editItemAction() {
-        //TODO: goto tab estoque and set all fields to item data
+        try {
+            isEdit = true;
+            PreparedStatement newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
+            newSt.setString(1, (String) tableModel.getValueAt(stockTable.getSelectedRow(), 12));
+            ResultSet rs = newSt.executeQuery();
+            categoryCombo.removeActionListener(categoryListener);
+            trademarkCombo.removeActionListener(trademarkListener);
+            while (rs.next()) {
+                barCodeText.setText(rs.getString("barcode"));
+                colorText.setText(rs.getString("color"));
+                startText.setText(rs.getString("start"));
+                descriptionText.setText(rs.getString("description"));
+                categoryCombo.setSelectedItem(rs.getString("category"));
+                weigthText.setText(String.valueOf(rs.getFloat("weight")));
+                trademarkCombo.setSelectedItem(rs.getString("trademark"));
+                metersText.setText(String.valueOf(rs.getInt("meters")));
+                localizationText.setText(rs.getString("location"));
+                priceText.setText(String.format("%.02f", rs.getFloat("price")).replace(".", ","));
+                quantityText.setText(String.valueOf(rs.getFloat("quantity")).replace(".", ","));
+                observationText.setText(rs.getString("observation"));
+                int width = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image")))).getWidth(null);
+                int height = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image")))).getHeight(null);
+                int greater;
+                if (width > height) greater = width;
+                else greater = height;
+                photo.setText("                                                ");
+                photo.setName(rs.getString("image"));
+                photo.setIcon(new ImageIcon(ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image"))))
+                        .getScaledInstance((int) (photo.getWidth() * ((float) width / (float) greater)), (int) (photo.getHeight() * ((float) height / (float) greater)), Image.SCALE_SMOOTH)));
+                photo.setHorizontalTextPosition(JLabel.CENTER);
+                photo.setVerticalTextPosition(JLabel.CENTER);
+            }
+            categoryCombo.addActionListener(categoryListener);
+            trademarkCombo.addActionListener(trademarkListener);
+            cancelUpdate.setVisible(true);
+            tabs.setSelectedIndex(1);
+        } catch (IOException | SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void trademarkComboListener() {
+        if (trademarkCombo.getSelectedIndex() == 0) {
+            String marca = JOptionPane.showInputDialog(null, "Marca: ", "Inserir marca", JOptionPane.QUESTION_MESSAGE);
+            try {
+                if (marca != null) {
+                    PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO trademark (trademark) VALUES (?)");
+                    novoSt.setString(1, marca);
+                    novoSt.executeUpdate();
+                    setTrademarkCombo();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Marca já cadastrada");
+            }
+        } else if (trademarkCombo.getSelectedIndex() == trademarkCombo.getItemCount() - 1) {
+            String marca = JOptionPane.showInputDialog(null, "Marca: ", "Excluir marca", JOptionPane.QUESTION_MESSAGE);
+            try {
+                PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM trademark WHERE trademark = ?");
+                novoSt.setString(1, marca);
+                novoSt.executeUpdate();
+                setTrademarkCombo();
+            } catch (SQLException ignored) {
+            }
+        } else {
+            trademarkCombo.transferFocus();
+        }
+    }
+
+    private void categoryComboListener() {
+        if (categoryCombo.getSelectedIndex() == 0) {
+            String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Inserir categoria", JOptionPane.QUESTION_MESSAGE);
+            try {
+                if (marca != null) {
+                    PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO category (category) VALUES (?)");
+                    novoSt.setString(1, marca);
+                    novoSt.executeUpdate();
+                    setCategoryCombo();
+                }
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, "Categoria já cadastrada");
+            }
+        } else if (categoryCombo.getSelectedIndex() == categoryCombo.getItemCount() - 1) {
+            String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Excluir categoria", JOptionPane.QUESTION_MESSAGE);
+            try {
+                PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM category WHERE category = ?");
+                novoSt.setString(1, marca);
+                novoSt.executeUpdate();
+                setCategoryCombo();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, "Categoria não existente");
+            }
+        } else {
+            categoryCombo.transferFocus();
+        }
     }
 
     public static void main(String args[]) {
@@ -768,40 +851,28 @@ public class Main extends javax.swing.JFrame {
 
     private javax.swing.JButton addToDb;
     private javax.swing.JButton addToList;
-    private java.awt.Label barCode;
     private java.awt.TextField barCodeText;
     private java.awt.TextField barCodeToAdd;
     private javax.swing.JButton cancel;
-    private java.awt.Label category;
     private javax.swing.JComboBox<String> categoryCombo;
-    private java.awt.Label start;
     private java.awt.TextField startText;
     private javax.swing.JButton confirm;
     private javax.swing.JButton delete;
-    private java.awt.Label description;
     private java.awt.TextField descriptionText;
     private javax.swing.JList itemList;
     private javax.swing.JScrollPane jScrollPane1;
-    private java.awt.Label localization;
     private java.awt.TextField localizationText;
-    private java.awt.Label meters;
     private java.awt.TextField metersText;
     private java.awt.TextField observationText;
-    private java.awt.Label observations;
-    private java.awt.Label price;
     private java.awt.TextField priceText;
-    private java.awt.Label quantity;
     private java.awt.TextField quantityText;
     private javax.swing.JPanel salePanel;
-    private java.awt.Label color;
     private java.awt.TextField colorText;
     private javax.swing.JPanel stockPanel;
     private javax.swing.JTabbedPane tabs;
     private java.awt.Label total;
     private java.awt.Label totalPrice;
-    private java.awt.Label trademark;
     private javax.swing.JComboBox<String> trademarkCombo;
-    private java.awt.Label weigth;
     private java.awt.TextField weigthText;
     private javax.swing.JLabel photo;
     private javax.swing.JPanel stockListPanel;
@@ -810,6 +881,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton addToStock;
     private javax.swing.JButton deleteItem;
     private javax.swing.JButton editItem;
+    private javax.swing.JButton cancelUpdate;
     private DefaultListModel<ItemObject> model = new DefaultListModel<>();
     private DefaultTableModel tableModel = new DefaultTableModel() {
         @Override
@@ -817,6 +889,9 @@ public class Main extends javax.swing.JFrame {
             return false;
         }
     };
+    private ActionListener categoryListener = actionEvent -> categoryComboListener();
+    private ActionListener trademarkListener = actionEvent -> trademarkComboListener();
     private Statement st;
     private Float totalPriceText = (float) 0;
+    private boolean isEdit = false;
 }
