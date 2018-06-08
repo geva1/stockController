@@ -126,10 +126,16 @@ public class Main extends javax.swing.JFrame {
         addToDb.setText("Salvar");
         addToDb.addActionListener(actionEvent -> addToDbActionPerformed());
 
-        cancelUpdate.setVisible(false);
         cancelUpdate.setFont(new java.awt.Font("Arial", Font.PLAIN, 18)); // NOI18N
         cancelUpdate.setText("Cancelar");
-        cancelUpdate.addActionListener(actionEvent -> clearAllFields());
+        cancelUpdate.addActionListener(actionEvent -> {
+            clearAllFields();
+            addRowsToTable();
+            jFrame.remove(stockPanel);
+            jFrame.add(stockListPanel);
+            tabs.invalidate();
+            tabs.revalidate();
+        });
 
         photo.setFont(new java.awt.Font("Arial", Font.PLAIN, 12)); // NOI18N
         photo.setText(" Adicionar uma foto...");
@@ -209,7 +215,11 @@ public class Main extends javax.swing.JFrame {
                 isEdit = false;
             }
             clearAllFields();
-            tabs.setSelectedIndex(1);
+            jFrame.remove(stockListPanel);
+            jFrame.add(stockPanel);
+            tabs.invalidate();
+            tabs.revalidate();
+            //tabs.setSelectedIndex(1);
         });
 
         editItem.setText("Editar...");
@@ -263,6 +273,7 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
+        jFrame = new JFrame();
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(stockListPanel);
         stockListPanel.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -298,7 +309,7 @@ public class Main extends javax.swing.JFrame {
         ImageIcon ii = new ImageIcon("iconImages/magnifying_glass.png");
         search.setIcon(new ImageIcon(ii.getImage().getScaledInstance(15, 15, Image.SCALE_SMOOTH)));
 
-        tabs.addTab("Itens", stockListPanel);
+        //tabs.addTab("Itens", stockListPanel);
 
         javax.swing.GroupLayout stockPanelLayout = new javax.swing.GroupLayout(stockPanel);
         stockPanel.setLayout(stockPanelLayout);
@@ -350,7 +361,7 @@ public class Main extends javax.swing.JFrame {
                                                                         .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                                                                 .addComponent(localizationText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                                                 .addComponent(priceText, javax.swing.GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE)))
-                                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 662, Short.MAX_VALUE)
                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, stockPanelLayout.createSequentialGroup()
                                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -432,7 +443,9 @@ public class Main extends javax.swing.JFrame {
                                 .addContainerGap())
         );
 
-        tabs.addTab("Estoque", stockPanel);
+        jFrame.add(stockListPanel);
+
+        tabs.addTab("Estoque", jFrame.getContentPane());
 
         itemList.setFont(new java.awt.Font("Arial", Font.PLAIN, 24)); // NOI18N
         itemList.addMouseListener(new MouseAdapter() {
@@ -552,7 +565,7 @@ public class Main extends javax.swing.JFrame {
 
         pack();
 
-        barCodeText.requestFocus();
+        addToStock.requestFocus();
         itemList.setCellRenderer(new ItemRenderer());
         itemList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         itemList.setModel(model);
@@ -591,6 +604,11 @@ public class Main extends javax.swing.JFrame {
             e.printStackTrace();
         }
         clearAllFields();
+        addRowsToTable();
+        jFrame.remove(stockPanel);
+        jFrame.add(stockListPanel);
+        tabs.invalidate();
+        tabs.revalidate();
     }
 
     private void confirmPurchase() {
@@ -766,6 +784,10 @@ public class Main extends javax.swing.JFrame {
 
     private void editItemAction() {
         if (stockTable.getSelectedRow() != -1) {
+            jFrame.remove(stockListPanel);
+            jFrame.add(stockPanel);
+            tabs.invalidate();
+            tabs.revalidate();
             try {
                 isEdit = true;
                 PreparedStatement newSt = st.getConnection().prepareStatement("SELECT * FROM stock WHERE barcode = ?");
@@ -796,7 +818,7 @@ public class Main extends javax.swing.JFrame {
                             photo.setText("                                                ");
                             photo.setName(rs.getString("image"));
                             photo.setIcon(new ImageIcon(ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image"))))
-                                    .getScaledInstance((int) (photo.getWidth() * ((float) width / (float) greater)), (int) (photo.getHeight() * ((float) height / (float) greater)), Image.SCALE_SMOOTH)));
+                                    .getScaledInstance((int) (150 * ((float) width / (float) greater)), (int) (150 * ((float) height / (float) greater)), Image.SCALE_SMOOTH)));
                             photo.setHorizontalTextPosition(JLabel.CENTER);
                             photo.setVerticalTextPosition(JLabel.CENTER);
                         }
@@ -804,8 +826,9 @@ public class Main extends javax.swing.JFrame {
                 }
                 categoryCombo.addActionListener(categoryListener);
                 trademarkCombo.addActionListener(trademarkListener);
-                cancelUpdate.setVisible(true);
-                tabs.setSelectedIndex(1);
+                //tabs.setSelectedIndex(1);
+
+                //stockPanel.setVisible(true);
             } catch (IOException | SQLException e) {
                 e.printStackTrace();
             }
@@ -872,7 +895,6 @@ public class Main extends javax.swing.JFrame {
         categoryCombo.removeActionListener(categoryListener);
         trademarkCombo.removeActionListener(trademarkListener);
         isEdit = false;
-        cancelUpdate.setVisible(false);
         barCodeText.setText("");
         colorText.setText("");
         startText.setText("");
@@ -975,4 +997,5 @@ public class Main extends javax.swing.JFrame {
     private ActionListener trademarkListener = actionEvent -> trademarkComboListener();
     private Statement st;
     private boolean isEdit = false;
+    private JFrame jFrame;
 }
