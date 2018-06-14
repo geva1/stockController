@@ -20,20 +20,69 @@ public class Main extends javax.swing.JFrame {
         try {
             Class.forName("org.h2.Driver");
             st = DriverManager.getConnection("jdbc:h2:./stockDBFiles/stockDB", "test", "test").createStatement();
-            st.execute("CREATE TABLE stock(barcode varchar(25) NOT NULL PRIMARY KEY, color varchar(25), start varchar(50), description varchar(255) NOT NULL, " +
-                    "category varchar(25), weight float, trademark varchar(25), meters integer, location varchar(25), price float NOT NULL, " +
-                    "quantity float NOT NULL, observation varchar(255), image text)");
-        } catch (ClassNotFoundException e) {
+            st.execute("CREATE TABLE IF NOT EXISTS trademark (\n" +
+                    "  trademark VARCHAR(45) NOT NULL,\n" +
+                    "  PRIMARY KEY (trademark));\n" +
+                    "\n" +
+                    "CREATE TABLE IF NOT EXISTS category (\n" +
+                    "  category VARCHAR(45) NOT NULL,\n" +
+                    "  PRIMARY KEY (category));\n" +
+                    "\n" +
+                    "CREATE TABLE IF NOT EXISTS stock (\n" +
+                    "  barcode VARCHAR(25) NOT NULL,\n" +
+                    "  color VARCHAR(45) NOT NULL,\n" +
+                    "  start VARCHAR(45) NOT NULL,\n" +
+                    "  description VARCHAR(255) NOT NULL,\n" +
+                    "  weight FLOAT NOT NULL,\n" +
+                    "  meters INT NOT NULL,\n" +
+                    "  location VARCHAR(45) NULL,\n" +
+                    "  price FLOAT NOT NULL,\n" +
+                    "  quantity FLOAT NOT NULL,\n" +
+                    "  observation VARCHAR(255) NOT NULL,\n" +
+                    "  image TEXT NULL,\n" +
+                    "  trademark VARCHAR(45) NOT NULL,\n" +
+                    "  category VARCHAR(45) NOT NULL,\n" +
+                    "  PRIMARY KEY (barcode),\n" +
+                    "    FOREIGN KEY (trademark)\n" +
+                    "    REFERENCES trademark (trademark)\n" +
+                    "    ON DELETE NO ACTION\n" +
+                    "    ON UPDATE NO ACTION,\n" +
+                    "    FOREIGN KEY (category)\n" +
+                    "    REFERENCES category (category)\n" +
+                    "    ON DELETE NO ACTION\n" +
+                    "    ON UPDATE NO ACTION);\n" +
+                    "\n" +
+                    "CREATE TABLE IF NOT EXISTS client (\n" +
+                    "  cpf VARCHAR(15) NOT NULL,\n" +
+                    "  name VARCHAR(127) NULL,\n" +
+                    "  adress VARCHAR(100) NULL,\n" +
+                    "  phone VARCHAR(45) NULL,\n" +
+                    "  cellphone VARCHAR(45) NULL,\n" +
+                    "  email VARCHAR(45) NULL,\n" +
+                    "  PRIMARY KEY (cpf));\n" +
+                    "\n" +
+                    "CREATE TABLE IF NOT EXISTS sale (\n" +
+                    "  id INT NOT NULL AUTO_INCREMENT,\n" +
+                    "  cpf VARCHAR(15) NOT NULL,\n" +
+                    "  PRIMARY KEY (id),\n" +
+                    "    FOREIGN KEY (cpf)\n" +
+                    "    REFERENCES client (cpf)\n" +
+                    "    ON DELETE NO ACTION\n" +
+                    "    ON UPDATE NO ACTION);\n" +
+                    "\n" +
+                    "CREATE TABLE IF NOT EXISTS sale_has_item (\n" +
+                    "  sale INT NOT NULL,\n" +
+                    "  barcode VARCHAR(25) NOT NULL,\n" +
+                    "    FOREIGN KEY (sale)\n" +
+                    "    REFERENCES sale (id)\n" +
+                    "    ON DELETE NO ACTION\n" +
+                    "    ON UPDATE NO ACTION,\n" +
+                    "    FOREIGN KEY (barcode)\n" +
+                    "    REFERENCES stock (barcode)\n" +
+                    "    ON DELETE NO ACTION\n" +
+                    "    ON UPDATE NO ACTION);\n");
+        } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
-        } catch (SQLException ignored) {
-        }
-        try {
-            st.execute("CREATE TABLE trademark(trademark varchar(25) NOT NULL PRIMARY KEY)");
-        } catch (SQLException ignored) {
-        }
-        try {
-            st.execute("CREATE TABLE category(category varchar(25) NOT NULL PRIMARY KEY)");
-        } catch (SQLException ignored) {
         }
         initComponents();
     }
@@ -582,33 +631,47 @@ public class Main extends javax.swing.JFrame {
                 e.printStackTrace();
             }
         }
-        try {
-            PreparedStatement newSt = st.getConnection().prepareStatement("INSERT INTO stock (barcode, color, start, " +
-                    "description, category, weight, trademark, meters, location," +
-                    "price, quantity, observation, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-            newSt.setString(1, barCodeText.getText());
-            newSt.setString(2, colorText.getText());
-            newSt.setString(3, startText.getText());
-            newSt.setString(4, descriptionText.getText());
-            newSt.setString(5, String.valueOf(categoryCombo.getSelectedItem()));
-            newSt.setFloat(6, Float.valueOf(weigthText.getText().replace(",", ".")));
-            newSt.setString(7, String.valueOf(trademarkCombo.getSelectedItem()));
-            newSt.setInt(8, Integer.valueOf(metersText.getText()));
-            newSt.setString(9, localizationText.getText());
-            newSt.setFloat(10, Float.valueOf(priceText.getText().replace(",", ".")));
-            newSt.setFloat(11, Float.valueOf(quantityText.getText().replace(",", ".")));
-            newSt.setString(12, observationText.getText());
-            newSt.setString(13, photo.getName());
-            newSt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+        ArrayList<String> isOk = verifyAllFields();
+        if (isOk.size() == 0) {
+            try {
+                PreparedStatement newSt = st.getConnection().prepareStatement("INSERT INTO stock (barcode, color, start, " +
+                        "description, category, weight, trademark, meters, location," +
+                        "price, quantity, observation, image) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                newSt.setString(1, barCodeText.getText());
+                newSt.setString(2, colorText.getText());
+                newSt.setString(3, startText.getText());
+                newSt.setString(4, descriptionText.getText());
+                newSt.setString(5, String.valueOf(categoryCombo.getSelectedItem()));
+                newSt.setFloat(6, Float.valueOf(weigthText.getText().replace(",", ".")));
+                newSt.setString(7, String.valueOf(trademarkCombo.getSelectedItem()));
+                newSt.setInt(8, Integer.valueOf(metersText.getText()));
+                newSt.setString(9, localizationText.getText());
+                newSt.setFloat(10, Float.valueOf(priceText.getText().replace(",", ".")));
+                newSt.setFloat(11, Float.valueOf(quantityText.getText().replace(",", ".")));
+                newSt.setString(12, observationText.getText());
+                newSt.setString(13, photo.getName());
+                newSt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            clearAllFields();
+            addRowsToTable();
+            jFrame.remove(stockPanel);
+            jFrame.add(stockListPanel);
+            tabs.invalidate();
+            tabs.revalidate();
+        } else {
+            StringBuilder stringToShow = new StringBuilder("Preencha corretamente os campos: \n");
+            for(String string : isOk) {
+                stringToShow.append(string).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, stringToShow.toString());
         }
-        clearAllFields();
-        addRowsToTable();
-        jFrame.remove(stockPanel);
-        jFrame.add(stockListPanel);
-        tabs.invalidate();
-        tabs.revalidate();
+    }
+
+    private ArrayList<String> verifyAllFields() {
+        //TODO: add method to verify fields
+        return new ArrayList<>();
     }
 
     private void confirmPurchase() {
