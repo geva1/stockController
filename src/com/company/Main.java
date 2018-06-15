@@ -107,10 +107,10 @@ public class Main extends javax.swing.JFrame {
         trademarkCombo = new javax.swing.JComboBox();
         Label localization = new Label();
         Label price = new Label();
-        Label weigth = new Label();
+        Label weight = new Label();
         Label meters = new Label();
         Label observations = new Label();
-        weigthText = new java.awt.TextField();
+        weightText = new java.awt.TextField();
         metersText = new java.awt.TextField();
         localizationText = new java.awt.TextField();
         priceText = new java.awt.TextField();
@@ -147,9 +147,9 @@ public class Main extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        barCodeToAdd.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 20)); // NOI18N
+        barCodeToAdd.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 20));
 
-        tabs.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 14)); // NOI18N
+        tabs.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 14));
 
         barCodeText.addActionListener(evt -> barCodeText.transferFocus());
 
@@ -171,11 +171,11 @@ public class Main extends javax.swing.JFrame {
 
         trademark.setText("Marca");
 
-        addToDb.setFont(new java.awt.Font("Arial", Font.PLAIN, 18)); // NOI18N
+        addToDb.setFont(new java.awt.Font("Arial", Font.PLAIN, 18));
         addToDb.setText("Salvar");
         addToDb.addActionListener(actionEvent -> addToDbActionPerformed());
 
-        cancelUpdate.setFont(new java.awt.Font("Arial", Font.PLAIN, 18)); // NOI18N
+        cancelUpdate.setFont(new java.awt.Font("Arial", Font.PLAIN, 18));
         cancelUpdate.setText("Cancelar");
         cancelUpdate.addActionListener(actionEvent -> {
             clearAllFields();
@@ -186,7 +186,7 @@ public class Main extends javax.swing.JFrame {
             tabs.revalidate();
         });
 
-        photo.setFont(new java.awt.Font("Arial", Font.PLAIN, 12)); // NOI18N
+        photo.setFont(new java.awt.Font("Arial", Font.PLAIN, 12));
         photo.setText(" Adicionar uma foto...");
         photo.setToolTipText("");
         photo.setFocusable(true);
@@ -238,13 +238,13 @@ public class Main extends javax.swing.JFrame {
 
         price.setText("Preço de venda");
 
-        weigth.setText("Peso");
+        weight.setText("Peso");
 
         meters.setText("Metros");
 
         observations.setText("Observações");
 
-        weigthText.addActionListener(evt -> weigthText.transferFocus());
+        weightText.addActionListener(evt -> weightText.transferFocus());
 
         metersText.addActionListener(evt -> metersText.transferFocus());
 
@@ -268,7 +268,12 @@ public class Main extends javax.swing.JFrame {
             jFrame.add(stockPanel);
             tabs.invalidate();
             tabs.revalidate();
-            //tabs.setSelectedIndex(1);
+            try {
+                setCategoryCombo();
+                setTrademarkCombo();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         });
 
         editItem.setText("Editar...");
@@ -288,7 +293,7 @@ public class Main extends javax.swing.JFrame {
             }
         });
 
-        searchText.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 20)); // NOI18N
+        searchText.setFont(new java.awt.Font("Tahoma", Font.PLAIN, 20));
         searchText.addActionListener(actionEvent -> searchItems());
         search.addActionListener(actionEvent -> searchItems());
 
@@ -358,8 +363,6 @@ public class Main extends javax.swing.JFrame {
         ImageIcon ii = new ImageIcon("iconImages/magnifying_glass.png");
         search.setIcon(new ImageIcon(ii.getImage().getScaledInstance(15, 15, Image.SCALE_SMOOTH)));
 
-        //tabs.addTab("Itens", stockListPanel);
-
         javax.swing.GroupLayout stockPanelLayout = new javax.swing.GroupLayout(stockPanel);
         stockPanel.setLayout(stockPanelLayout);
         stockPanelLayout.setHorizontalGroup(
@@ -421,11 +424,11 @@ public class Main extends javax.swing.JFrame {
                                                                                                 .addComponent(colorText, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))))
                                                                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, stockPanelLayout.createSequentialGroup()
                                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                                                        .addComponent(weigth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                                        .addComponent(weight, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                                                         .addComponent(meters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                                                         .addComponent(metersText, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                                        .addComponent(weigthText, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)))))))
+                                                                                        .addComponent(weightText, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)))))))
                                         .addComponent(photo, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addContainerGap())
         );
@@ -456,8 +459,8 @@ public class Main extends javax.swing.JFrame {
                                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                                         .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                                                                 .addComponent(categoryCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                                .addComponent(weigthText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                                                        .addComponent(weigth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                                                                .addComponent(weightText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                                        .addComponent(weight, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(stockPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                         .addGroup(stockPanelLayout.createSequentialGroup()
@@ -496,7 +499,7 @@ public class Main extends javax.swing.JFrame {
 
         tabs.addTab("Estoque", jFrame.getContentPane());
 
-        itemList.setFont(new java.awt.Font("Arial", Font.PLAIN, 24)); // NOI18N
+        itemList.setFont(new java.awt.Font("Arial", Font.PLAIN, 24));
         itemList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
@@ -527,15 +530,15 @@ public class Main extends javax.swing.JFrame {
         addToList.setText("Adicionar");
         addToList.addActionListener(actionEvent -> insertItemIntoList());
 
-        total.setFont(new java.awt.Font("Arial", Font.PLAIN, 48)); // NOI18N
+        total.setFont(new java.awt.Font("Arial", Font.PLAIN, 48));
         total.setText("À Vista: R$ ");
 
-        totalPrice.setFont(new java.awt.Font("Arial", Font.PLAIN, 48)); // NOI18N
+        totalPrice.setFont(new java.awt.Font("Arial", Font.PLAIN, 48));
         totalPrice.setText("0,00");
 
-        total2Times.setFont(new java.awt.Font("Arial", Font.PLAIN, 18)); // NOI18N
+        total2Times.setFont(new java.awt.Font("Arial", Font.PLAIN, 18));
         total2Times.setText("2x R$ 0,00");
-        total3Times.setFont(new java.awt.Font("Arial", Font.PLAIN, 18)); // NOI18N
+        total3Times.setFont(new java.awt.Font("Arial", Font.PLAIN, 18));
         total3Times.setText("3x R$ 0,00");
 
         javax.swing.GroupLayout salePanelLayout = new javax.swing.GroupLayout(salePanel);
@@ -642,7 +645,7 @@ public class Main extends javax.swing.JFrame {
                 newSt.setString(3, startText.getText());
                 newSt.setString(4, descriptionText.getText());
                 newSt.setString(5, String.valueOf(categoryCombo.getSelectedItem()));
-                newSt.setFloat(6, Float.valueOf(weigthText.getText().replace(",", ".")));
+                newSt.setFloat(6, Float.valueOf(weightText.getText().replace(",", ".")));
                 newSt.setString(7, String.valueOf(trademarkCombo.getSelectedItem()));
                 newSt.setInt(8, Integer.valueOf(metersText.getText()));
                 newSt.setString(9, localizationText.getText());
@@ -670,8 +673,44 @@ public class Main extends javax.swing.JFrame {
     }
 
     private ArrayList<String> verifyAllFields() {
-        //TODO: add method to verify fields
-        return new ArrayList<>();
+        ArrayList<String> fields = new ArrayList<>();
+        if(barCodeText.getText().equals("")) {
+            fields.add("Código de barras");
+        }
+        if(colorText.getText().equals("")) {
+            fields.add("Cor");
+        }
+        if(startText.getText().equals("")) {
+            fields.add("Partida");
+        }
+        if(descriptionText.getText().equals("")) {
+            fields.add("Descrição");
+        }
+        if(String.valueOf(categoryCombo.getSelectedItem()).equals("Nova categoria...") || String.valueOf(categoryCombo.getSelectedItem()).equals("Excluir categoria...")) {
+            fields.add("Categoria");
+        }
+        if(String.valueOf(trademarkCombo.getSelectedItem()).equals("Nova marca...") || String.valueOf(trademarkCombo.getSelectedItem()).equals("Excluir marca...")) {
+            fields.add("Marca");
+        }
+        if(!weightText.getText().matches("^\\d+([./,]\\d{0,3}?)?$")) {
+            fields.add("Peso");
+        }
+        if(!metersText.getText().matches("^\\d+?$")) {
+            fields.add("Metros");
+        }
+        if(!priceText.getText().matches("^\\d+[./,]\\d{2}?$")) {
+            fields.add("Preço de venda");
+        }
+        if(!quantityText.getText().matches("^\\d+([./,]\\d{0,3}?)?$")) {
+            fields.add("Estoque");
+        }
+        if(observationText.getText().equals("")) {
+            fields.add("Observações");
+        }
+        if(photo.getName().equals("")) {
+            fields.add("Foto");
+        }
+        return fields;
     }
 
     private void confirmPurchase() {
@@ -783,6 +822,7 @@ public class Main extends javax.swing.JFrame {
         }
         categories.add("Excluir categoria...");
         categoryCombo.setModel(new DefaultComboBoxModel<>(categories.toArray(new String[0])));
+        categoryCombo.setLightWeightPopupEnabled(false);
     }
 
     private void setTrademarkCombo() throws SQLException {
@@ -795,6 +835,7 @@ public class Main extends javax.swing.JFrame {
         }
         trademarks.add("Excluir marca...");
         trademarkCombo.setModel(new DefaultComboBoxModel<>(trademarks.toArray(new String[0])));
+        trademarkCombo.setLightWeightPopupEnabled(false);
     }
 
     private void deleteItemFromList() {
@@ -807,9 +848,7 @@ public class Main extends javax.swing.JFrame {
     private void addRowsToTable() {
         try {
             if (tableModel.getRowCount() > 0) {
-                for (int i = tableModel.getRowCount() - 1; i > -1; i--) {
-                    tableModel.removeRow(i);
-                }
+                tableModel.setRowCount(0);
             }
             PreparedStatement newSt = st.getConnection().prepareStatement("SELECT * FROM  stock");
             ResultSet rs = newSt.executeQuery();
@@ -864,7 +903,7 @@ public class Main extends javax.swing.JFrame {
                     startText.setText(rs.getString("start"));
                     descriptionText.setText(rs.getString("description"));
                     categoryCombo.setSelectedItem(rs.getString("category"));
-                    weigthText.setText(String.valueOf(rs.getFloat("weight")).replace(".", ","));
+                    weightText.setText(String.valueOf(rs.getFloat("weight")).replace(".", ","));
                     trademarkCombo.setSelectedItem(rs.getString("trademark"));
                     metersText.setText(String.valueOf(rs.getInt("meters")));
                     localizationText.setText(rs.getString("location"));
@@ -889,9 +928,6 @@ public class Main extends javax.swing.JFrame {
                 }
                 categoryCombo.addActionListener(categoryListener);
                 trademarkCombo.addActionListener(trademarkListener);
-                //tabs.setSelectedIndex(1);
-
-                //stockPanel.setVisible(true);
             } catch (IOException | SQLException e) {
                 e.printStackTrace();
             }
@@ -963,7 +999,7 @@ public class Main extends javax.swing.JFrame {
         startText.setText("");
         descriptionText.setText("");
         categoryCombo.setSelectedIndex(0);
-        weigthText.setText("");
+        weightText.setText("");
         trademarkCombo.setSelectedIndex(0);
         metersText.setText("");
         localizationText.setText("");
@@ -1040,7 +1076,7 @@ public class Main extends javax.swing.JFrame {
     private java.awt.Label total3Times;
     private java.awt.Label totalPrice;
     private javax.swing.JComboBox<String> trademarkCombo;
-    private java.awt.TextField weigthText;
+    private java.awt.TextField weightText;
     private javax.swing.JLabel photo;
     private javax.swing.JPanel stockListPanel;
     private javax.swing.JScrollPane stockListScroll;
