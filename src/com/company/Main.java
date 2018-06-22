@@ -62,13 +62,16 @@ public class Main extends javax.swing.JFrame {
                     "  PRIMARY KEY (cpf));\n" +
                     "\n" +
                     "CREATE TABLE IF NOT EXISTS sale (\n" +
-                    "  id INT NOT NULL AUTO_INCREMENT,\n" +
-                    "  cpf VARCHAR(15) NOT NULL,\n" +
+                    " id INT NOT NULL AUTO_INCREMENT,\n" +
+                    " cpf VARCHAR(15) NOT NULL,\n" +
+                    " total VARCHAR(45) NULL,\n" +
+                    " installments INT NULL,\n" +
+                    " method VARCHAR(45) NULL,\n" +
                     "  PRIMARY KEY (id),\n" +
-                    "    FOREIGN KEY (cpf)\n" +
-                    "    REFERENCES client (cpf)\n" +
-                    "    ON DELETE NO ACTION\n" +
-                    "    ON UPDATE NO ACTION);\n" +
+                    "  FOREIGN KEY (cpf)\n" +
+                    "  REFERENCES client (cpf)\n" +
+                    "  ON DELETE NO ACTION\n" +
+                    "  ON UPDATE NO ACTION)\n" +
                     "\n" +
                     "CREATE TABLE IF NOT EXISTS sale_has_item (\n" +
                     "  sale INT NOT NULL,\n" +
@@ -133,7 +136,7 @@ public class Main extends javax.swing.JFrame {
         delete = new javax.swing.JButton();
         search = new javax.swing.JButton();
         stockListPanel = new javax.swing.JPanel();
-        stockListScroll = new javax.swing.JScrollPane();
+        JScrollPane stockListScroll = new JScrollPane();
         addToStock = new javax.swing.JButton();
         editItem = new javax.swing.JButton();
         deleteItem = new javax.swing.JButton();
@@ -531,15 +534,17 @@ public class Main extends javax.swing.JFrame {
         addToList.addActionListener(actionEvent -> insertItemIntoList());
 
         total.setFont(new java.awt.Font("Arial", Font.PLAIN, 48));
-        total.setText("À Vista: R$ ");
+        total.setText("/ R$ ");
 
         totalPrice.setFont(new java.awt.Font("Arial", Font.PLAIN, 48));
         totalPrice.setText("0,00");
 
-        total2Times.setFont(new java.awt.Font("Arial", Font.PLAIN, 18));
-        total2Times.setText("2x R$ 0,00");
-        total3Times.setFont(new java.awt.Font("Arial", Font.PLAIN, 18));
+        total2Times.setFont(new java.awt.Font("Arial", Font.PLAIN, 48));
+        total2Times.setText("/ 2x R$ 0,00");
+        total3Times.setFont(new java.awt.Font("Arial", Font.PLAIN, 48));
         total3Times.setText("3x R$ 0,00");
+
+        saleFrame = new JFrame();
 
         javax.swing.GroupLayout salePanelLayout = new javax.swing.GroupLayout(salePanel);
         salePanel.setLayout(salePanelLayout);
@@ -557,9 +562,8 @@ public class Main extends javax.swing.JFrame {
                                                 .addComponent(confirm))
                                         .addGroup(salePanelLayout.createSequentialGroup()
                                                 .addGap(111, 297, Short.MAX_VALUE)
-                                                .addGroup(salePanelLayout.createParallelGroup()
-                                                        .addComponent(total2Times, GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                        .addComponent(total3Times, GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                .addComponent(total3Times, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(total2Times, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(total, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addComponent(totalPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -583,9 +587,8 @@ public class Main extends javax.swing.JFrame {
                                 .addGroup(salePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                         .addComponent(total, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(totalPrice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGroup(salePanelLayout.createSequentialGroup()
-                                                .addComponent(total2Times, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addComponent(total3Times, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                        .addComponent(total3Times, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(total2Times, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(salePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(confirm)
@@ -596,7 +599,9 @@ public class Main extends javax.swing.JFrame {
 
         total.getAccessibleContext().setAccessibleDescription("");
 
-        tabs.addTab("Venda", salePanel);
+        saleFrame.add(salePanel);
+
+        tabs.addTab("Venda", saleFrame.getContentPane());
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -612,8 +617,199 @@ public class Main extends javax.swing.JFrame {
         tabs.addChangeListener(changeEvent -> {
             if (tabs.getSelectedIndex() == 0) {
                 addRowsToTable();
+            } else if (tabs.getSelectedIndex() == 1) {
+                barCodeToAdd.requestFocus();
             }
         });
+
+        buttonGroup1.add(aVista);
+        aVista.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        aVista.setText("À Vista");
+
+        buttonGroup1.add(times3);
+        times3.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        times3.setText("3 vezes");
+
+        buttonGroup1.add(times2);
+        times2.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        times2.setText("2 vezes");
+
+        label1.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        label1.setText("1ª Parcela");
+
+        label2.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        label2.setText("2ª Parcela");
+
+        label3.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        label3.setText("3ª Parcela");
+
+        buttonGroup2.add(money1);
+        money1.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        money1.setText("Dinheiro");
+
+        buttonGroup2.add(check1);
+        check1.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        check1.setText("Cheque");
+
+        buttonGroup2.add(debit1);
+        debit1.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        debit1.setText("Débito");
+
+        buttonGroup2.add(credit1);
+        credit1.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        credit1.setText("Crédito");
+
+        buttonGroup3.add(money2);
+        money2.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        money2.setText("Dinheiro");
+
+        buttonGroup3.add(check2);
+        check2.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        check2.setText("Cheque");
+
+        buttonGroup3.add(debit2);
+        debit2.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        debit2.setText("Débito");
+
+        buttonGroup3.add(credit2);
+        credit2.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        credit2.setText("Crédito");
+
+        buttonGroup4.add(money3);
+        money3.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        money3.setText("Dinheiro");
+
+        buttonGroup4.add(check3);
+        check3.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        check3.setText("Cheque");
+
+        buttonGroup4.add(debit3);
+        debit3.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        debit3.setText("Débito");
+
+        buttonGroup4.add(credit3);
+        credit3.setFont(new java.awt.Font("Arial", Font.PLAIN, 11)); // NOI18N
+        credit3.setText("Crédito");
+
+        addClient.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        addClient.setText("Cadastrar cliente");
+
+        confirmSale.setFont(new java.awt.Font("Arial", Font.PLAIN, 24)); // NOI18N
+        confirmSale.setText("Confirmar");
+        confirmSale.addActionListener(actionEvent -> finishSale());
+
+        cancelSale.setFont(new java.awt.Font("Arial", Font.PLAIN, 24)); // NOI18N
+        cancelSale.setText("Cancelar");
+        cancelSale.addActionListener(actionEvent -> cancelSale());
+
+        searchClient.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        searchClient.setText("Buscar cliente");
+
+        clientName.setFont(new java.awt.Font("Arial", Font.PLAIN, 24)); // NOI18N
+
+        removeClient.setFont(new java.awt.Font("Arial", Font.PLAIN, 14)); // NOI18N
+        removeClient.setText("Remover cliente");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+                jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                                                .addComponent(cancelSale, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(confirmSale, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                                                .addComponent(times3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                                .addComponent(aVista, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                                .addComponent(times2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                                        .addComponent(addClient, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE)
+                                                        .addComponent(searchClient, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(clientName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                                .addGap(165, 165, 165)
+                                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                        .addComponent(money1)
+                                                                        .addComponent(check1)
+                                                                        .addComponent(debit1)
+                                                                        .addComponent(credit1))
+                                                                .addGap(100, 100, 100)
+                                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(money2)
+                                                                        .addComponent(check2)
+                                                                        .addComponent(credit2)
+                                                                        .addComponent(label2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                        .addComponent(debit2))
+                                                                .addGap(100, 100, 100)
+                                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                                        .addComponent(label3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                        .addComponent(money3)
+                                                                        .addComponent(check3)
+                                                                        .addComponent(debit3)
+                                                                        .addComponent(credit3)))
+                                                        .addComponent(removeClient, javax.swing.GroupLayout.PREFERRED_SIZE, 293, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                .addGap(0, 410, Short.MAX_VALUE)))
+                                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+                jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                                        .addComponent(aVista, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                                .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                                        .addComponent(money1)
+                                                                        .addComponent(money2)
+                                                                        .addComponent(money3))))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                                .addComponent(times2, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                .addComponent(times3, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                        .addGroup(jPanel2Layout.createSequentialGroup()
+                                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                                        .addComponent(check1)
+                                                                        .addComponent(check2)
+                                                                        .addComponent(check3))
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                                        .addComponent(debit1)
+                                                                        .addComponent(debit2)
+                                                                        .addComponent(debit3))
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                                        .addComponent(credit1)
+                                                                        .addComponent(credit2)
+                                                                        .addComponent(credit3)))))
+                                        .addComponent(label2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(label3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(addClient, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addComponent(searchClient, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(clientName, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(18, 18, 18)
+                                .addComponent(removeClient, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(confirmSale, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(cancelSale, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addContainerGap())
+        );
 
         pack();
 
@@ -665,7 +861,7 @@ public class Main extends javax.swing.JFrame {
             tabs.revalidate();
         } else {
             StringBuilder stringToShow = new StringBuilder("Preencha corretamente os campos: \n");
-            for(String string : isOk) {
+            for (String string : isOk) {
                 stringToShow.append(string).append("\n");
             }
             JOptionPane.showMessageDialog(null, stringToShow.toString());
@@ -674,53 +870,80 @@ public class Main extends javax.swing.JFrame {
 
     private ArrayList<String> verifyAllFields() {
         ArrayList<String> fields = new ArrayList<>();
-        if(barCodeText.getText().equals("")) {
+        if (barCodeText.getText().equals("")) {
             fields.add("Código de barras");
         }
-        if(colorText.getText().equals("")) {
+        if (colorText.getText().equals("")) {
             fields.add("Cor");
         }
-        if(startText.getText().equals("")) {
+        if (startText.getText().equals("")) {
             fields.add("Partida");
         }
-        if(descriptionText.getText().equals("")) {
+        if (descriptionText.getText().equals("")) {
             fields.add("Descrição");
         }
-        if(String.valueOf(categoryCombo.getSelectedItem()).equals("Nova categoria...") || String.valueOf(categoryCombo.getSelectedItem()).equals("Excluir categoria...")) {
+        if (String.valueOf(categoryCombo.getSelectedItem()).equals("Nova categoria...") || String.valueOf(categoryCombo.getSelectedItem()).equals("Excluir categoria...")) {
             fields.add("Categoria");
         }
-        if(String.valueOf(trademarkCombo.getSelectedItem()).equals("Nova marca...") || String.valueOf(trademarkCombo.getSelectedItem()).equals("Excluir marca...")) {
+        if (String.valueOf(trademarkCombo.getSelectedItem()).equals("Nova marca...") || String.valueOf(trademarkCombo.getSelectedItem()).equals("Excluir marca...")) {
             fields.add("Marca");
         }
-        if(!weightText.getText().matches("^\\d+([./,]\\d{0,3}?)?$")) {
+        if (!weightText.getText().matches("^\\d+([./,]\\d{0,3}?)?$")) {
             fields.add("Peso");
         }
-        if(!metersText.getText().matches("^\\d+?$")) {
+        if (!metersText.getText().matches("^\\d+?$")) {
             fields.add("Metros");
         }
-        if(!priceText.getText().matches("^\\d+[./,]\\d{2}?$")) {
+        if (!priceText.getText().matches("^\\d+[./,]\\d{2}?$")) {
             fields.add("Preço de venda");
         }
-        if(!quantityText.getText().matches("^\\d+([./,]\\d{0,3}?)?$")) {
+        if (!quantityText.getText().matches("^\\d+([./,]\\d{0,3}?)?$")) {
             fields.add("Estoque");
         }
-        if(observationText.getText().equals("")) {
+        if (observationText.getText().equals("")) {
             fields.add("Observações");
         }
-        if(photo.getName().equals("")) {
+        if (photo.getName().equals("")) {
             fields.add("Foto");
         }
         return fields;
     }
 
     private void confirmPurchase() {
+        saleFrame.remove(salePanel);
+        saleFrame.add(jPanel2);
+        jPanel2.repaint();
+        tabs.invalidate();
+        tabs.revalidate();
+    }
+
+    private void cancelSale() {
+        saleFrame.remove(jPanel2);
+        saleFrame.add(salePanel);
+        salePanel.repaint();
+        tabs.invalidate();
+        tabs.revalidate();
+        clearList();
+        barCodeToAdd.requestFocus();
+    }
+
+    private void finishSale() {
+        saleFrame.remove(jPanel2);
+        saleFrame.add(salePanel);
+        salePanel.repaint();
+        tabs.invalidate();
+        tabs.revalidate();
+        buttonGroup1.clearSelection();
+        buttonGroup2.clearSelection();
+        buttonGroup3.clearSelection();
+        buttonGroup4.clearSelection();
+        clientName.setText("");
         try {
             if (model.size() > 0) {
-                PreparedStatement newSt = st.getConnection().prepareStatement("UPDATE stock SET quantity = ((SELECT quantity FROM stock WHERE barcode = ? LIMIT 1) - ?) WHERE barcode = ?");
+                PreparedStatement newSt = st.getConnection().prepareStatement("UPDATE stock SET quantity = quantity - ? WHERE barcode = ?");
                 for (int i = 0; i < model.size(); i++) {
-                    newSt.setString(1, (model.getElementAt(i)).getBarcode());
-                    newSt.setFloat(2, (model.getElementAt(i)).getQuantity());
-                    newSt.setString(3, (model.getElementAt(i)).getBarcode());
+                    newSt.setFloat(1, (model.getElementAt(i)).getQuantity());
+                    newSt.setString(2, (model.getElementAt(i)).getBarcode());
                     newSt.executeUpdate();
                 }
                 model.removeAllElements();
@@ -729,6 +952,7 @@ public class Main extends javax.swing.JFrame {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        barCodeToAdd.requestFocus();
     }
 
     private void clearList() {
@@ -784,8 +1008,8 @@ public class Main extends javax.swing.JFrame {
                         ResultSet rs = newSt.executeQuery();
                         if (rs.next()) {
                             String description = rs.getNString(4);
-                            Float price = rs.getFloat(10);
-                            String imageBase64 = rs.getString(13);
+                            Float price = rs.getFloat(8);
+                            String imageBase64 = rs.getString(11);
                             model.addElement(new ItemObject(description, String.valueOf(price), imageBase64, (float) 1, barCodeToAdd.getText()));
                             setTotalPriceTextLabel();
                         } else {
@@ -807,7 +1031,7 @@ public class Main extends javax.swing.JFrame {
             price += (Float.valueOf((model.getElementAt(i)).getPrice()) * (model.getElementAt(i)).getQuantity());
         }
         totalPrice.setText(String.format("%.02f", (Math.ceil((price - (price * 0.05)) * 100)) / 100).replace(".", ","));
-        total2Times.setText(String.format("2x R$ %.02f", (Math.ceil(((price - (price * 0.03)) / 2) * 100)) / 100).replace(".", ","));
+        total2Times.setText(String.format("/ 2x R$ %.02f", (Math.ceil(((price - (price * 0.03)) / 2) * 100)) / 100).replace(".", ","));
         total3Times.setText(String.format("3x R$ %.02f", (Math.ceil((price / 3) * 100)) / 100).replace(".", ","));
         salePanel.validate();
     }
@@ -843,6 +1067,7 @@ public class Main extends javax.swing.JFrame {
             model.remove(itemList.getSelectedIndex());
             setTotalPriceTextLabel();
         }
+        barCodeToAdd.requestFocus();
     }
 
     private void addRowsToTable() {
@@ -1079,7 +1304,6 @@ public class Main extends javax.swing.JFrame {
     private java.awt.TextField weightText;
     private javax.swing.JLabel photo;
     private javax.swing.JPanel stockListPanel;
-    private javax.swing.JScrollPane stockListScroll;
     private javax.swing.JTable stockTable;
     private javax.swing.JButton addToStock;
     private javax.swing.JButton deleteItem;
@@ -1097,4 +1321,34 @@ public class Main extends javax.swing.JFrame {
     private Statement st;
     private boolean isEdit = false;
     private JFrame jFrame;
+    private JFrame saleFrame;
+    private javax.swing.JRadioButton aVista = new JRadioButton();
+    private javax.swing.JButton addClient = new JButton();
+    private javax.swing.ButtonGroup buttonGroup1 = new ButtonGroup();
+    private javax.swing.ButtonGroup buttonGroup2 = new ButtonGroup();
+    private javax.swing.ButtonGroup buttonGroup3 = new ButtonGroup();
+    private javax.swing.ButtonGroup buttonGroup4 = new ButtonGroup();
+    private javax.swing.JButton cancelSale = new JButton();
+    private javax.swing.JRadioButton check1 = new JRadioButton();
+    private javax.swing.JRadioButton check2 = new JRadioButton();
+    private javax.swing.JRadioButton check3 = new JRadioButton();
+    private java.awt.Label clientName = new Label();
+    private javax.swing.JButton confirmSale = new JButton();
+    private javax.swing.JRadioButton credit1 = new JRadioButton();
+    private javax.swing.JRadioButton credit2 = new JRadioButton();
+    private javax.swing.JRadioButton credit3 = new JRadioButton();
+    private javax.swing.JRadioButton debit1 = new JRadioButton();
+    private javax.swing.JRadioButton debit2 = new JRadioButton();
+    private javax.swing.JRadioButton debit3 = new JRadioButton();
+    private javax.swing.JPanel jPanel2 = new JPanel();
+    private java.awt.Label label1 = new Label();
+    private java.awt.Label label2 = new Label();
+    private java.awt.Label label3 = new Label();
+    private javax.swing.JRadioButton money1 = new JRadioButton();
+    private javax.swing.JRadioButton money2 = new JRadioButton();
+    private javax.swing.JRadioButton money3 = new JRadioButton();
+    private javax.swing.JButton removeClient = new JButton();
+    private javax.swing.JButton searchClient = new JButton();
+    private javax.swing.JRadioButton times2 = new JRadioButton();
+    private javax.swing.JRadioButton times3 = new JRadioButton();
 }
