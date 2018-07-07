@@ -42,7 +42,7 @@ public class Main extends javax.swing.JFrame {
                     "  image TEXT NULL,\n" +
                     "  trademark VARCHAR(45) NOT NULL,\n" +
                     "  category VARCHAR(45) NOT NULL,\n" +
-                    "  PRIMARY KEY (barcode),\n" +
+                    "  PRIMARY KEY (barcode, start),\n" +
                     "    FOREIGN KEY (trademark)\n" +
                     "    REFERENCES trademark (trademark)\n" +
                     "    ON DELETE NO ACTION\n" +
@@ -71,17 +71,33 @@ public class Main extends javax.swing.JFrame {
                     "  FOREIGN KEY (cpf)\n" +
                     "  REFERENCES client (cpf)\n" +
                     "  ON DELETE NO ACTION\n" +
-                    "  ON UPDATE NO ACTION)\n" +
+                    "  ON UPDATE NO ACTION);\n" +
                     "\n" +
                     "CREATE TABLE IF NOT EXISTS sale_has_item (\n" +
                     "  sale INT NOT NULL,\n" +
                     "  barcode VARCHAR(25) NOT NULL,\n" +
+                    "  start VARCHAR(45) NOT NULL,\n" +
                     "    FOREIGN KEY (sale)\n" +
                     "    REFERENCES sale (id)\n" +
                     "    ON DELETE NO ACTION\n" +
                     "    ON UPDATE NO ACTION,\n" +
-                    "    FOREIGN KEY (barcode)\n" +
-                    "    REFERENCES stock (barcode)\n" +
+                    "    FOREIGN KEY (barcode, start)\n" +
+                    "    REFERENCES stock (barcode, start)\n" +
+                    "    ON DELETE NO ACTION\n" +
+                    "    ON UPDATE NO ACTION);\n");
+            st.execute("DROP TABLE sale_has_item;\n");
+            st.execute("ALTER TABLE stock DROP PRIMARY KEY;\n");
+            st.execute("ALTER TABLE stock ADD PRIMARY KEY (barcode, start);\n");
+            st.execute("CREATE TABLE IF NOT EXISTS sale_has_item (\n" +
+                    "  sale INT NOT NULL,\n" +
+                    "  barcode VARCHAR(25) NOT NULL,\n" +
+                    "  start VARCHAR(45) NOT NULL,\n" +
+                    "    FOREIGN KEY (sale)\n" +
+                    "    REFERENCES sale (id)\n" +
+                    "    ON DELETE NO ACTION\n" +
+                    "    ON UPDATE NO ACTION,\n" +
+                    "    FOREIGN KEY (barcode, start)\n" +
+                    "    REFERENCES stock (barcode, start)\n" +
                     "    ON DELETE NO ACTION\n" +
                     "    ON UPDATE NO ACTION);\n");
         } catch (ClassNotFoundException | SQLException e) {
@@ -182,7 +198,7 @@ public class Main extends javax.swing.JFrame {
         cancelUpdate.setText("Cancelar");
         cancelUpdate.addActionListener(actionEvent -> {
             clearAllFields();
-            addRowsToTable();
+            //addRowsToTable();
             jFrame.remove(stockPanel);
             jFrame.add(stockListPanel);
             tabs.invalidate();
@@ -213,7 +229,8 @@ public class Main extends javax.swing.JFrame {
                         photo.setText("                                                ");
                         photo.setName(Base64.getEncoder().encodeToString(bytes));
                         photo.setIcon(new ImageIcon(new ImageIcon(jf.getSelectedFile().getAbsolutePath()).getImage()
-                                .getScaledInstance((int) (photo.getWidth() * ((float) width / (float) greater)), (int) (photo.getHeight() * ((float) height / (float) greater)), Image.SCALE_SMOOTH)));
+                                .getScaledInstance((int) (photo.getWidth() * ((float) width / (float) greater)),
+                                        (int) (photo.getHeight() * ((float) height / (float) greater)), Image.SCALE_SMOOTH)));
                         photo.setHorizontalTextPosition(JLabel.CENTER);
                         photo.setVerticalTextPosition(JLabel.CENTER);
                     } catch (Exception e) {
@@ -301,7 +318,8 @@ public class Main extends javax.swing.JFrame {
         search.addActionListener(actionEvent -> searchItems());
 
         tableModel.setColumnIdentifiers(new String[]{
-                "Foto", "Descrição", "Cor", "Partida", "Categoria", "Marca", "Peso", "Metros", "Localização", "Preço", "Estoque", "Observações", "Código de barras"
+                "Foto", "Descrição", "Cor", "Partida", "Categoria", "Marca", "Peso", "Metros", "Localização", "Preço",
+                "Estoque", "Observações", "Código de barras"
         });
         addRowsToTable();
         stockTable.setModel(tableModel);
@@ -318,7 +336,7 @@ public class Main extends javax.swing.JFrame {
         stockTable.getColumnModel().getColumn(8).setPreferredWidth(80);
         stockTable.getColumnModel().getColumn(9).setPreferredWidth(50);
         stockTable.getColumnModel().getColumn(10).setPreferredWidth(100);
-        stockTable.getColumnModel().getColumn(11).setPreferredWidth(193);
+        stockTable.getColumnModel().getColumn(11).setPreferredWidth(168);
         stockTable.getColumnModel().getColumn(12).setPreferredWidth(100);
         stockTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         stockTable.addMouseListener(new MouseAdapter() {
@@ -510,7 +528,8 @@ public class Main extends javax.swing.JFrame {
                     String quantidade = JOptionPane.showInputDialog(null, "Quantidade: ", "Atualizar quantidade", JOptionPane.QUESTION_MESSAGE);
                     if (quantidade != null) {
                         ItemObject itemObject = model.getElementAt(itemList.getSelectedIndex());
-                        model.set(itemList.getSelectedIndex(), new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
+                        model.set(itemList.getSelectedIndex(), new ItemObject(itemObject.getName(), itemObject.getPrice(),
+                                itemObject.getImage(),
                                 Float.valueOf(quantidade.replace(",", ".")), itemObject.getBarcode()));
                         setTotalPriceTextLabel();
                     }
@@ -850,15 +869,15 @@ public class Main extends javax.swing.JFrame {
                 newSt.setString(12, observationText.getText());
                 newSt.setString(13, photo.getName());
                 newSt.executeUpdate();
+                clearAllFields();
+                addRowsToTable();
+                jFrame.remove(stockPanel);
+                jFrame.add(stockListPanel);
+                tabs.invalidate();
+                tabs.revalidate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(null, "Esse código de barras já foi cadastrado");
             }
-            clearAllFields();
-            addRowsToTable();
-            jFrame.remove(stockPanel);
-            jFrame.add(stockListPanel);
-            tabs.invalidate();
-            tabs.revalidate();
         } else {
             StringBuilder stringToShow = new StringBuilder("Preencha corretamente os campos: \n");
             for (String string : isOk) {
@@ -882,10 +901,12 @@ public class Main extends javax.swing.JFrame {
         if (descriptionText.getText().equals("")) {
             fields.add("Descrição");
         }
-        if (String.valueOf(categoryCombo.getSelectedItem()).equals("Nova categoria...") || String.valueOf(categoryCombo.getSelectedItem()).equals("Excluir categoria...")) {
+        if (String.valueOf(categoryCombo.getSelectedItem()).equals("Nova categoria...") ||
+                String.valueOf(categoryCombo.getSelectedItem()).equals("Excluir categoria...")) {
             fields.add("Categoria");
         }
-        if (String.valueOf(trademarkCombo.getSelectedItem()).equals("Nova marca...") || String.valueOf(trademarkCombo.getSelectedItem()).equals("Excluir marca...")) {
+        if (String.valueOf(trademarkCombo.getSelectedItem()).equals("Nova marca...") ||
+                String.valueOf(trademarkCombo.getSelectedItem()).equals("Excluir marca...")) {
             fields.add("Marca");
         }
         if (!weightText.getText().matches("^\\d+([./,]\\d{0,3}?)?$")) {
@@ -940,7 +961,8 @@ public class Main extends javax.swing.JFrame {
         clientName.setText("");
         try {
             if (model.size() > 0) {
-                PreparedStatement newSt = st.getConnection().prepareStatement("UPDATE stock SET quantity = quantity - ? WHERE barcode = ?");
+                PreparedStatement newSt = st.getConnection()
+                        .prepareStatement("UPDATE stock SET quantity = quantity - ? WHERE barcode = ?");
                 for (int i = 0; i < model.size(); i++) {
                     newSt.setFloat(1, (model.getElementAt(i)).getQuantity());
                     newSt.setString(2, (model.getElementAt(i)).getBarcode());
@@ -985,8 +1007,10 @@ public class Main extends javax.swing.JFrame {
                             setTotalPriceTextLabel();
                         } else {
                             ItemObject itemObject = model.lastElement();
-                            model.set(model.indexOf(itemObject), new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
-                                    Float.valueOf(barCodeToAdd.getText().replace("x", "")), itemObject.getBarcode()));
+                            model.set(model.indexOf(itemObject), new ItemObject(itemObject.getName(), itemObject.getPrice(),
+                                    itemObject.getImage(),
+                                    Float.valueOf(barCodeToAdd.getText().replace("x", "")),
+                                    itemObject.getBarcode()));
                             setTotalPriceTextLabel();
                         }
                     }
@@ -996,7 +1020,8 @@ public class Main extends javax.swing.JFrame {
                 for (int i = 0; i < model.size(); i++) {
                     ItemObject itemObject = model.getElementAt(i);
                     if (itemObject.getBarcode().equals(barCodeToAdd.getText())) {
-                        model.set(i, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(), itemObject.getQuantity() + 1, itemObject.getBarcode()));
+                        model.set(i, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
+                                itemObject.getQuantity() + 1, itemObject.getBarcode()));
                         setTotalPriceTextLabel();
                         hasInList = true;
                     }
@@ -1010,7 +1035,8 @@ public class Main extends javax.swing.JFrame {
                             String description = rs.getNString(4);
                             Float price = rs.getFloat(8);
                             String imageBase64 = rs.getString(11);
-                            model.addElement(new ItemObject(description, String.valueOf(price), imageBase64, (float) 1, barCodeToAdd.getText()));
+                            model.addElement(new ItemObject(description, String.valueOf(price), imageBase64,
+                                    (float) 1, barCodeToAdd.getText()));
                             setTotalPriceTextLabel();
                         } else {
                             JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
@@ -1030,9 +1056,12 @@ public class Main extends javax.swing.JFrame {
         for (int i = 0; i < model.size(); i++) {
             price += (Float.valueOf((model.getElementAt(i)).getPrice()) * (model.getElementAt(i)).getQuantity());
         }
-        totalPrice.setText(String.format("%.02f", (Math.ceil((price - (price * 0.05)) * 100)) / 100).replace(".", ","));
-        total2Times.setText(String.format("/ 2x R$ %.02f", (Math.ceil(((price - (price * 0.03)) / 2) * 100)) / 100).replace(".", ","));
-        total3Times.setText(String.format("3x R$ %.02f", (Math.ceil((price / 3) * 100)) / 100).replace(".", ","));
+        totalPrice.setText(String.format("%.02f", (Math.ceil((price - (price * 0.05)) * 100)) / 100)
+                .replace(".", ","));
+        total2Times.setText(String.format("/ 2x R$ %.02f", (Math.ceil(((price - (price * 0.03)) / 2) * 100)) / 100)
+                .replace(".", ","));
+        total3Times.setText(String.format("3x R$ %.02f", (Math.ceil((price / 3) * 100)) / 100)
+                .replace(".", ","));
         salePanel.validate();
     }
 
@@ -1071,23 +1100,28 @@ public class Main extends javax.swing.JFrame {
     }
 
     private void addRowsToTable() {
-        try {
+        new AddToListAsync(this).execute();
+        /*try {
             if (tableModel.getRowCount() > 0) {
                 tableModel.setRowCount(0);
             }
-            PreparedStatement newSt = st.getConnection().prepareStatement("SELECT * FROM  stock");
+            PreparedStatement newSt = st.getConnection().prepareStatement("SELECT * FROM stock");
             ResultSet rs = newSt.executeQuery();
             Object[] stockItems = new Object[13];
             while (rs.next()) {
                 if (rs.getString("image") != null) {
                     if (!rs.getString("image").equals("")) {
-                        int width = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image")))).getWidth(null);
-                        int height = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image")))).getHeight(null);
+                        int width = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder()
+                                .decodeBuffer(rs.getString("image")))).getWidth(null);
+                        int height = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder()
+                                .decodeBuffer(rs.getString("image")))).getHeight(null);
                         int greater;
                         if (width > height) greater = width;
                         else greater = height;
-                        stockItems[0] = new ImageIcon(ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image"))))
-                                .getScaledInstance((int) (60 * ((float) width / (float) greater)), (int) (60 * ((float) height / (float) greater)), Image.SCALE_SMOOTH));
+                        stockItems[0] = new ImageIcon(ImageIO.read(new ByteArrayInputStream(
+                                new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image"))))
+                                .getScaledInstance((int) (60 * ((float) width / (float) greater)),
+                                        (int) (60 * ((float) height / (float) greater)), Image.SCALE_SMOOTH));
                     }
                 }
                 stockItems[1] = rs.getString("description");
@@ -1106,7 +1140,7 @@ public class Main extends javax.swing.JFrame {
             }
         } catch (SQLException | IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     private void editItemAction() {
@@ -1137,15 +1171,18 @@ public class Main extends javax.swing.JFrame {
                     observationText.setText(rs.getString("observation"));
                     if (rs.getString("image") != null) {
                         if (!rs.getString("image").equals("")) {
-                            int width = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image")))).getWidth(null);
-                            int height = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image")))).getHeight(null);
+                            int width = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder()
+                                    .decodeBuffer(rs.getString("image")))).getWidth(null);
+                            int height = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder()
+                                    .decodeBuffer(rs.getString("image")))).getHeight(null);
                             int greater;
                             if (width > height) greater = width;
                             else greater = height;
                             photo.setText("                                                ");
                             photo.setName(rs.getString("image"));
                             photo.setIcon(new ImageIcon(ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(rs.getString("image"))))
-                                    .getScaledInstance((int) (150 * ((float) width / (float) greater)), (int) (150 * ((float) height / (float) greater)), Image.SCALE_SMOOTH)));
+                                    .getScaledInstance((int) (150 * ((float) width / (float) greater)),
+                                            (int) (150 * ((float) height / (float) greater)), Image.SCALE_SMOOTH)));
                             photo.setHorizontalTextPosition(JLabel.CENTER);
                             photo.setVerticalTextPosition(JLabel.CENTER);
                         }
@@ -1189,7 +1226,8 @@ public class Main extends javax.swing.JFrame {
 
     private void categoryComboListener() {
         if (categoryCombo.getSelectedIndex() == 0) {
-            String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Inserir categoria", JOptionPane.QUESTION_MESSAGE);
+            String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Inserir categoria",
+                    JOptionPane.QUESTION_MESSAGE);
             try {
                 if (marca != null) {
                     PreparedStatement novoSt = st.getConnection().prepareStatement("INSERT INTO category (category) VALUES (?)");
@@ -1201,7 +1239,8 @@ public class Main extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(null, "Categoria já cadastrada");
             }
         } else if (categoryCombo.getSelectedIndex() == categoryCombo.getItemCount() - 1) {
-            String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Excluir categoria", JOptionPane.QUESTION_MESSAGE);
+            String marca = JOptionPane.showInputDialog(null, "Categoria: ", "Excluir categoria",
+                    JOptionPane.QUESTION_MESSAGE);
             try {
                 PreparedStatement novoSt = st.getConnection().prepareStatement("DELETE FROM category WHERE category = ?");
                 novoSt.setString(1, marca);
@@ -1310,7 +1349,7 @@ public class Main extends javax.swing.JFrame {
     private javax.swing.JButton editItem;
     private javax.swing.JButton cancelUpdate;
     private DefaultListModel<ItemObject> model = new DefaultListModel<>();
-    private DefaultTableModel tableModel = new DefaultTableModel() {
+    DefaultTableModel tableModel = new DefaultTableModel() {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -1318,7 +1357,7 @@ public class Main extends javax.swing.JFrame {
     };
     private ActionListener categoryListener = actionEvent -> categoryComboListener();
     private ActionListener trademarkListener = actionEvent -> trademarkComboListener();
-    private Statement st;
+    Statement st;
     private boolean isEdit = false;
     private JFrame jFrame;
     private JFrame saleFrame;
