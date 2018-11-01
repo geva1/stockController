@@ -1,4 +1,4 @@
-package com.company;
+package com.company.Objects;
 
 public class ItemObject {
     private String name;

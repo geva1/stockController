@@ -1,9 +1,13 @@
 package com.company;
 
+import com.company.Objects.ItemObject;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 
 public class ItemRenderer extends JPanel implements ListCellRenderer<ItemObject> {
@@ -15,7 +19,7 @@ public class ItemRenderer extends JPanel implements ListCellRenderer<ItemObject>
     private JPanel panelText = new JPanel(new BorderLayout(3, 20));
     private JPanel panelPrice = new JPanel(new BorderLayout(2, 20));
 
-    ItemRenderer() {
+    public ItemRenderer() {
         lbName.setFont(new java.awt.Font("Arial", Font.PLAIN, 28)); // NOI18N
         lbPrice.setFont(new java.awt.Font("Arial", Font.PLAIN, 28)); // NOI18N
         lbTotalPrice.setFont(new java.awt.Font("Arial", Font.PLAIN, 28)); // NOI18N
@@ -39,22 +43,22 @@ public class ItemRenderer extends JPanel implements ListCellRenderer<ItemObject>
     public Component getListCellRendererComponent(JList<? extends ItemObject> list, ItemObject itemObject, int i, boolean b, boolean b1) {
         try {
             if(itemObject.getImage() != null) {
-                int width = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(itemObject.getImage()))).getWidth(null);
-                int height = ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(itemObject.getImage()))).getHeight(null);
+                BufferedImage imageIO = ImageIO.read(new File(itemObject.getImage()));
+                int width = imageIO.getWidth(null);
+                int height = imageIO.getHeight(null);
                 int greater;
                 if(width > height) greater = width;
                 else greater = height;
-
+                height = (int) (60 * ((float) height / (float) greater));
+                width = (int) (60 * ((float) width / (float) greater));
                 lbIcon.setText("                   ");
-                lbIcon.setIcon(new ImageIcon(ImageIO.read(new ByteArrayInputStream(new sun.misc.BASE64Decoder().decodeBuffer(itemObject.getImage())))
-                        .getScaledInstance((int)(60*((float)width/(float)greater)), (int)(60*((float)height/(float)greater)), Image.SCALE_SMOOTH)));
-
+                lbIcon.setIcon(new ImageIcon(imageIO.getScaledInstance(width, height, Image.SCALE_SMOOTH)));
                 lbIcon.setHorizontalTextPosition(JLabel.CENTER);
                 lbIcon.setVerticalTextPosition(JLabel.CENTER);
                 lbIcon.revalidate();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            lbIcon.setIcon(new ImageIcon());
         }
         lbName.setText(itemObject.getName());
         lbPrice.setText("R$ " + String.format("%.02f", Float.valueOf(itemObject.getPrice())).replace(".", ","));
