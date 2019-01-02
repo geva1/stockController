@@ -8,11 +8,11 @@ import com.company.Objects.ItemObject;
 import murilo.libs.model.exception.ModelException;
 
 import javax.swing.*;
-import javax.xml.crypto.Data;
 import java.awt.*;
-
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 
 class SaleItselfView extends JFrame {
@@ -24,6 +24,7 @@ class SaleItselfView extends JFrame {
     private Label totalPrice;
     private DatabaseService database;
     private DefaultListModel<ItemObject> model = new DefaultListModel<>();
+    private Client client;
 
     SaleItselfView(DatabaseService database) {
         this.database = database;
@@ -32,6 +33,7 @@ class SaleItselfView extends JFrame {
 
     SaleItselfView(DatabaseService database, Client client) {
         this.database = database;
+        this.client = client;
         setTitle(client.getName());
         initComponents();
     }
@@ -61,7 +63,7 @@ class SaleItselfView extends JFrame {
                         ItemObject itemObject = model.getElementAt(itemList.getSelectedIndex());
                         model.set(itemList.getSelectedIndex(), new ItemObject(itemObject.getName(), itemObject.getPrice(),
                                 itemObject.getImage(),
-                                Float.valueOf(quantidade.replace(",", ".")), itemObject.getBarcode()));
+                                Float.valueOf(quantidade.replace(",", ".")), itemObject.getBarcode(), itemObject.getStart()));
                         setTotalPriceTextLabel();
                     }
                 }
@@ -71,8 +73,20 @@ class SaleItselfView extends JFrame {
 
         confirm.setText("Confirmar");
         confirm.addActionListener(actionEvent -> {
-            //getContentPane().setLayout(new SaleEndView().getGroupLayout());
-            //todo call new finish sale screen
+            setVisible(false);
+            SaleFinishView f = new SaleFinishView(database, client, model);
+            f.setVisible(true);
+            JFrame thisFrame = this;
+            f.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent windowEvent) {
+                    boolean confirmed = f.getConfirmation();
+                    if(!confirmed) {
+                        thisFrame.setVisible(true);
+                    }
+                    super.windowClosed(windowEvent);
+                }
+            });
         });
 
         delete.setText("Exluir item");
@@ -182,33 +196,37 @@ class SaleItselfView extends JFrame {
 
     private void insertItemIntoList() {
         if (!barCodeToAdd.getText().equals("") && barCodeToAdd.getText() != null) {
+            ArrayList<Stock> stockItems = new ArrayList<>();
+            try {
+                stockItems.addAll(database.getItemByBarcode(barCodeToAdd.getText()));
+            } catch (ModelException e) {
+                e.printStackTrace();
+            }
             boolean hasInList = false;
             for (int i = 0; i < model.size(); i++) {
                 ItemObject itemObject = model.getElementAt(i);
-                if (itemObject.getBarcode().equals(barCodeToAdd.getText())) {
+                if (itemObject.getBarcode().equals(barCodeToAdd.getText()) && stockItems.size() < 2) {
                     model.set(i, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
-                            itemObject.getQuantity() + 1, itemObject.getBarcode()));
+                            itemObject.getQuantity() + 1, itemObject.getBarcode(), itemObject.getStart()));
                     setTotalPriceTextLabel();
                     hasInList = true;
                     break;
                 }
             }
             if (!hasInList) {
-                try {
-                    ArrayList<Stock> stockItems = (ArrayList<Stock>) database.getItemByBarcode(barCodeToAdd.getText());
                     if (stockItems.size() == 1) {
                         String description = stockItems.get(0).getDescription();
                         Double price = stockItems.get(0).getPrice();
                         String imageUrl = stockItems.get(0).getImage();
+                        String start = stockItems.get(0).getStart();
                         model.addElement(new ItemObject(description, String.valueOf(price), imageUrl,
-                                (float) 1, barCodeToAdd.getText()));
+                                (float) 1, barCodeToAdd.getText(), start));
                         setTotalPriceTextLabel();
+                    } else if(stockItems.size() > 1) {
+                        //todo: ask item start
                     } else {
                         JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
                     }
-                } catch (ModelException e) {
-                    e.printStackTrace();
-                }
             }
         }
         barCodeToAdd.requestFocus();

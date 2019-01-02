@@ -6,13 +6,15 @@ public class ItemObject {
     private String image;
     private Float quantity;
     private String barcode;
+    private String start;
 
-    public ItemObject(String name, String price, String image, Float quantity, String barcode) {
+    public ItemObject(String name, String price, String image, Float quantity, String barcode, String start) {
         this.name = name;
         this.price = price;
         this.image = image;
         this.quantity = quantity;
         this.barcode = barcode;
+        this.start = start;
     }
 
     public ItemObject() {
@@ -56,5 +58,13 @@ public class ItemObject {
 
     public void setBarcode(String barcode) {
         this.barcode = barcode;
+    }
+
+    public String getStart() {
+        return start;
+    }
+
+    public void setStart(String start) {
+        this.start = start;
     }
 }

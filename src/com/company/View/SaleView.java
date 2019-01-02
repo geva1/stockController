@@ -75,7 +75,6 @@ public class SaleView extends JPanel {
                     });
                     JOptionPane.showConfirmDialog(null, comboBox, "Cliente", JOptionPane.DEFAULT_OPTION);
                     if(comboBox.getSelectedItem() != null) {
-                        System.out.println(comboBox.getSelectedItem());
                         Client cliente = new Client();
                         if(comboBox.getSelectedIndex() > 0){
                             cliente = clients.get(comboBox.getSelectedIndex());
@@ -135,8 +134,8 @@ public class SaleView extends JPanel {
         saleTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                if (mouseEvent.getClickCount() == 2 && saleTable.getSelectedRow() != -1) {//todo call edit sale screen
-                    System.out.println(tableModel.getValueAt(saleTable.getSelectedRow(), 3));
+                if (mouseEvent.getClickCount() == 2 && saleTable.getSelectedRow() != -1) {
+                    //todo call edit sale screen
                 }
             }
         });
