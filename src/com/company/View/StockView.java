@@ -159,7 +159,7 @@ public class StockView extends JPanel implements AddItemsToTableListener {
         return stockListPanel;
     }
 
-    private void addRowsToTable() {
+    public void addRowsToTable() {
         new AddToListAsync(this, searchText.getText()).execute();
     }
 

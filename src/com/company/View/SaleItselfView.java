@@ -1,6 +1,7 @@
 package com.company.View;
 
 import com.company.Database.DatabaseService;
+import com.company.Interfaces.AddSaleToListListener;
 import com.company.ItemRenderer;
 import com.company.Models.Client;
 import com.company.Models.Stock;
@@ -25,16 +26,16 @@ class SaleItselfView extends JFrame {
     private DatabaseService database;
     private DefaultListModel<ItemObject> model = new DefaultListModel<>();
     private Client client;
+    private AddSaleToListListener listener;
+    private float price = 0;
 
-    SaleItselfView(DatabaseService database) {
-        this.database = database;
-        initComponents();
-    }
-
-    SaleItselfView(DatabaseService database, Client client) {
+    SaleItselfView(DatabaseService database, Client client, AddSaleToListListener listener) {
         this.database = database;
         this.client = client;
-        setTitle(client.getName());
+        this.listener = listener;
+        if(client != null) {
+            setTitle(client.getName());
+        }
         initComponents();
     }
 
@@ -63,7 +64,7 @@ class SaleItselfView extends JFrame {
                         ItemObject itemObject = model.getElementAt(itemList.getSelectedIndex());
                         model.set(itemList.getSelectedIndex(), new ItemObject(itemObject.getName(), itemObject.getPrice(),
                                 itemObject.getImage(),
-                                Float.valueOf(quantidade.replace(",", ".")), itemObject.getBarcode(), itemObject.getStart()));
+                                Float.valueOf(quantidade.replace(",", ".")), itemObject.getId()));
                         setTotalPriceTextLabel();
                     }
                 }
@@ -73,20 +74,22 @@ class SaleItselfView extends JFrame {
 
         confirm.setText("Confirmar");
         confirm.addActionListener(actionEvent -> {
-            setVisible(false);
-            SaleFinishView f = new SaleFinishView(database, client, model);
-            f.setVisible(true);
-            JFrame thisFrame = this;
-            f.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent windowEvent) {
-                    boolean confirmed = f.getConfirmation();
-                    if(!confirmed) {
-                        thisFrame.setVisible(true);
+            if(model.size() > 0) {
+                setVisible(false);
+                SaleFinishView f = new SaleFinishView(database, client, price, model, listener);
+                f.setVisible(true);
+                JFrame thisFrame = this;
+                f.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent windowEvent) {
+                        boolean confirmed = f.getConfirmation();
+                        if (!confirmed) {
+                            thisFrame.setVisible(true);
+                        }
+                        super.windowClosed(windowEvent);
                     }
-                    super.windowClosed(windowEvent);
-                }
-            });
+                });
+            }
         });
 
         delete.setText("Exluir item");
@@ -181,7 +184,7 @@ class SaleItselfView extends JFrame {
     }
 
     private void setTotalPriceTextLabel() {
-        float price = 0;
+        price = 0;
         for (int i = 0; i < model.size(); i++) {
             price += (Float.valueOf((model.getElementAt(i)).getPrice()) * (model.getElementAt(i)).getQuantity());
         }
@@ -205,28 +208,59 @@ class SaleItselfView extends JFrame {
             boolean hasInList = false;
             for (int i = 0; i < model.size(); i++) {
                 ItemObject itemObject = model.getElementAt(i);
-                if (itemObject.getBarcode().equals(barCodeToAdd.getText()) && stockItems.size() < 2) {
+                if (stockItems.size() < 2 && itemObject.getId().equals(stockItems.get(0).getId())) {
                     model.set(i, new ItemObject(itemObject.getName(), itemObject.getPrice(), itemObject.getImage(),
-                            itemObject.getQuantity() + 1, itemObject.getBarcode(), itemObject.getStart()));
+                            itemObject.getQuantity() + 1, itemObject.getId()));
                     setTotalPriceTextLabel();
                     hasInList = true;
                     break;
                 }
             }
             if (!hasInList) {
-                    if (stockItems.size() == 1) {
-                        String description = stockItems.get(0).getDescription();
-                        Double price = stockItems.get(0).getPrice();
-                        String imageUrl = stockItems.get(0).getImage();
-                        String start = stockItems.get(0).getStart();
-                        model.addElement(new ItemObject(description, String.valueOf(price), imageUrl,
-                                (float) 1, barCodeToAdd.getText(), start));
-                        setTotalPriceTextLabel();
-                    } else if(stockItems.size() > 1) {
-                        //todo: ask item start
-                    } else {
+                if (stockItems.size() == 1) {
+                    String description = stockItems.get(0).getDescription();
+                    Double price = stockItems.get(0).getPrice();
+                    String imageUrl = stockItems.get(0).getImage();
+                    Integer id = stockItems.get(0).getId();
+                    model.addElement(new ItemObject(description, String.valueOf(price), imageUrl,
+                            (float) 1, id));
+                    setTotalPriceTextLabel();
+                } else if(stockItems.size() > 1) {
+                    String start = JOptionPane.showInputDialog(null,"Digite a partida do item", "Erro",
+                            JOptionPane.QUESTION_MESSAGE);
+                    boolean exists = false;
+                    for(Stock item : stockItems) {
+                        if(item.getStart().equals(start)) {
+                            exists = true;
+                            boolean ok = false;
+                            for (int i = 0; i < model.size(); i++) {
+                                ItemObject itemObject = model.getElementAt(i);
+                                if (itemObject.getId().equals(stockItems.get(0).getId())) {
+                                    model.set(i, new ItemObject(itemObject.getName(), itemObject.getPrice(),
+                                            itemObject.getImage(), itemObject.getQuantity() + 1,
+                                            itemObject.getId()));
+                                    setTotalPriceTextLabel();
+                                    ok = true;
+                                    break;
+                                }
+                            }
+                            if(!ok) {
+                                String description = item.getDescription();
+                                Double price = item.getPrice();
+                                String imageUrl = item.getImage();
+                                Integer id = item.getId();
+                                model.addElement(new ItemObject(description, String.valueOf(price), imageUrl,
+                                        (float) 1, id));
+                                setTotalPriceTextLabel();
+                            }
+                        }
+                    }
+                    if(!exists) {
                         JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
                     }
+                } else {
+                    JOptionPane.showMessageDialog(null, "Esse item não existe no estoque");
+                }
             }
         }
         barCodeToAdd.requestFocus();

@@ -1,23 +1,37 @@
 package com.company.View;
 
 import com.company.Database.DatabaseService;
+import com.company.Interfaces.AddClientListener;
+import com.company.Interfaces.AddSaleToListListener;
 import com.company.ItemRenderer;
 import com.company.Models.Client;
 import com.company.Objects.ItemObject;
+import murilo.libs.model.exception.ModelException;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 
-class SaleFinishView extends JFrame {
+class SaleFinishView extends JFrame implements AddClientListener {
     private DatabaseService database;
     private Client client;
     private DefaultListModel<ItemObject> model;
     private Boolean confirmed = false;
+    private Double totalPrice;
+    private Double total2Times;
+    private Float total3Times;
+    private AddSaleToListListener listener;
+    private AddClientListener addClientListener = this;
 
-    SaleFinishView(DatabaseService database, Client client, DefaultListModel<ItemObject> model) {
+    SaleFinishView(DatabaseService database, Client client, Float total,
+                   DefaultListModel<ItemObject> model, AddSaleToListListener listener) {
         this.database = database;
         this.client = client;
+        this.total3Times = total;
+        this.totalPrice = (Math.ceil((total3Times - (total3Times * 0.05)) * 100)) / 100;
+        this.total2Times = (Math.ceil(((total3Times - (total3Times * 0.03)) / 2) * 100) * 2) / 100;
         this.model = model;
+        this.listener = listener;
         initComponents();
     }
 
@@ -41,6 +55,7 @@ class SaleFinishView extends JFrame {
         label2 = new java.awt.Label();
         label3 = new java.awt.Label();
         label4 = new java.awt.Label();
+        total = new java.awt.Label();
 
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         jScrollPane2.setViewportView(itemsList);
@@ -63,7 +78,7 @@ class SaleFinishView extends JFrame {
             addEditClient.setText("Adicionar Cliente");
         }
         addEditClient.addActionListener(actionEvent -> {
-            //todo: call add client screen
+            //todo: call add client (not create)
         });
 
         removeClient.setText("Remover Cliente");
@@ -75,17 +90,71 @@ class SaleFinishView extends JFrame {
 
         confirmButton.setText("Confirmar");
         confirmButton.addActionListener(actionEvent -> {
+            boolean cancel = false;
+            if(installmentList.getSelectedIndex() < 0) {
+                cancel = true;
+            } else if(installmentList2.getSelectedIndex() < 0 && paymentMode.getSelectedIndex() >= 1) {
+                cancel = true;
+            } else if(installmentList3.getSelectedIndex() < 0 && paymentMode.getSelectedIndex() > 1) {
+                cancel = true;
+            }
+            if(cancel) {
+                JOptionPane.showMessageDialog(null, "Selecione os métodos de pagamento");
+                return;
+            }
+            if((installmentList.getSelectedIndex() > 2 || installmentList2.getSelectedIndex() > 2
+                    || installmentList3.getSelectedIndex() > 2)) {
+                if(client == null) {
+                    JOptionPane.showMessageDialog(null,
+                            "Para pagamento em cheque é necessário adicionar um cliente");
+                    return;
+                } else if((client != null && client.getCpf() == null)) {
+                    Integer result = JOptionPane.showConfirmDialog(null,
+                            "Para pagamento em cheque é necessário o cadastro do cliente,\n deseja finalizar o cadastro?",
+                            "Cliente", JOptionPane.YES_NO_OPTION);
+                    if(result == JOptionPane.YES_OPTION) {
+                        JFrame frame = new ClientItemView(database, addClientListener, client);
+                        frame.setVisible(true);
+                    }
+                    return;
+                }
+            }
             confirmed = true;
-            //todo: update database
+            ArrayList<ItemObject> items = new ArrayList<>();
+            for(int i = 0; i < model.size(); i++) {
+                items.add(model.getElementAt(i));
+            }
+            try {
+                Double trueTotal = 0.0;
+                switch (paymentMode.getSelectedIndex()) {
+                    case 0: trueTotal = totalPrice; break;
+                    case 1: trueTotal = total2Times; break;
+                    case 2: trueTotal = Double.valueOf(total3Times); break;
+                }
+                database.createSale(items, client, trueTotal, installmentList.getSelectedValue(),
+                        installmentList2.getSelectedValue(), installmentList3.getSelectedValue());
+                listener.addSaleToList();
+            } catch (ModelException e) {
+                e.printStackTrace();
+            }
             dispose();
         });
 
         cancelButton.setText("Cancelar");
         cancelButton.addActionListener(actionEvent -> dispose());
 
+        DefaultListModel<String> installment = new DefaultListModel<>();
+        installment.addElement("Crédito");
+        installment.addElement("Débito");
+        installment.addElement("Dinheiro");
+        installment.addElement("Cheque");
+
         installmentList.setVisible(false);
+        installmentList.setModel(installment);
         installmentList2.setVisible(false);
+        installmentList2.setModel(installment);
         installmentList3.setVisible(false);
+        installmentList3.setModel(installment);
 
         DefaultListModel<String> payment = new DefaultListModel<>();
         payment.addElement("À Vista");
@@ -98,6 +167,7 @@ class SaleFinishView extends JFrame {
         paymentMode.addListSelectionListener(listSelectionEvent -> {
             switch (paymentMode.getSelectedIndex()) {
                 case 0:
+                    total.setText(String.format("Total: R$ %.02f", totalPrice).replace(".", ","));
                     installmentList.setVisible(true);
                     installmentList2.setVisible(false);
                     installmentList3.setVisible(false);
@@ -106,6 +176,7 @@ class SaleFinishView extends JFrame {
                     label4.setText("");
                     break;
                 case 1:
+                    total.setText(String.format("Total: R$ %.02f", total2Times).replace(".", ","));
                     installmentList.setVisible(true);
                     installmentList2.setVisible(true);
                     installmentList3.setVisible(false);
@@ -114,6 +185,7 @@ class SaleFinishView extends JFrame {
                     label4.setText("");
                     break;
                 case 2:
+                    total.setText(String.format("Total: R$ %.02f", total3Times).replace(".", ","));
                     installmentList.setVisible(true);
                     installmentList2.setVisible(true);
                     installmentList3.setVisible(true);
@@ -123,6 +195,9 @@ class SaleFinishView extends JFrame {
                     break;
             }
         });
+
+        total.setFont(new java.awt.Font("Arial", 0, 24)); // NOI18N
+        total.setText("");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -137,11 +212,6 @@ class SaleFinishView extends JFrame {
                                                 .addComponent(addEditClient, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                 .addComponent(removeClient, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                                .addGap(0, 0, Short.MAX_VALUE)
-                                                .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(confirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE))
                                         .addComponent(clientName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addGroup(layout.createSequentialGroup()
                                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
@@ -155,7 +225,15 @@ class SaleFinishView extends JFrame {
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                                         .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                                        .addComponent(label4, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE))))
+                                                        .addComponent(label4, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE)))
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                                .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(confirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                                        .addComponent(total, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 368, javax.swing.GroupLayout.PREFERRED_SIZE))))
                                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -181,7 +259,9 @@ class SaleFinishView extends JFrame {
                                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                                         .addComponent(addEditClient, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                         .addComponent(removeClient, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 71, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(total, javax.swing.GroupLayout.DEFAULT_SIZE, 51, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                                         .addComponent(confirmButton, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE)
                                                         .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
@@ -218,4 +298,11 @@ class SaleFinishView extends JFrame {
     private java.awt.Label label4;
     private javax.swing.JList<String> installmentList2;
     private javax.swing.JList<String> installmentList3;
+    private java.awt.Label total;
+
+    @Override
+    public void setClient(Client client) {
+        this.client = client;
+        this.clientName.setText(client.getName());
+    }
 }

@@ -5,16 +5,14 @@ public class ItemObject {
     private String price;
     private String image;
     private Float quantity;
-    private String barcode;
-    private String start;
+    private Integer id;
 
-    public ItemObject(String name, String price, String image, Float quantity, String barcode, String start) {
+    public ItemObject(String name, String price, String image, Float quantity, Integer id) {
         this.name = name;
         this.price = price;
         this.image = image;
         this.quantity = quantity;
-        this.barcode = barcode;
-        this.start = start;
+        this.id = id;
     }
 
     public ItemObject() {
@@ -52,19 +50,11 @@ public class ItemObject {
         this.quantity = quantity;
     }
 
-    public String getBarcode() {
-        return barcode;
+    public Integer getId() {
+        return id;
     }
 
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
-    }
-
-    public String getStart() {
-        return start;
-    }
-
-    public void setStart(String start) {
-        this.start = start;
+    public void setId(Integer id) {
+        this.id = id;
     }
 }

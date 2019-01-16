@@ -42,7 +42,8 @@ public class Main extends JFrame {
                         .addGap(0, 510, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab("Estoque", new StockView(database).getStockListPanel());
+        StockView stockView = new StockView(database);
+        jTabbedPane1.addTab("Estoque", stockView.getStockListPanel());
 
         GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -55,7 +56,7 @@ public class Main extends JFrame {
                         .addGap(0, 510, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab("Vendas", new SaleView(database).getSaleListPanel());
+        jTabbedPane1.addTab("Vendas", new SaleView(database, stockView).getSaleListPanel());
 
         GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);

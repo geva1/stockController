@@ -1,6 +1,7 @@
 package com.company.Database;
 
 import com.company.Models.*;
+import com.company.Objects.ItemObject;
 import com.company.Objects.SaleItem;
 import murilo.libs.database.Connector;
 import murilo.libs.database.Drive;
@@ -9,6 +10,7 @@ import murilo.libs.model.exception.ModelException;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +38,7 @@ public class DatabaseService {
         trademark = new Model<>("trademark", "trademark", Trademark.class);
         category = new Model<>("category", "category", Category.class);
         client = new Model<>("client", "cpf", Client.class);
-        sale = new Model<>("sale", "category", Sale.class);
+        sale = new Model<>("sale", "id", Sale.class);
         saleHasItem = new Model<>("sale_has_item", "sale", SaleHasItem.class);
     }
 
@@ -131,22 +133,22 @@ public class DatabaseService {
         for (Sale item : saleList) {
             SaleItem saleItem = new SaleItem();
             saleItem.setTotal(0.0);
-            saleItem.setName(item.getCpf() != null ? getClient(item.getCpf()).getName() : "");
+            saleItem.setName(item.getClient_id() != null ? getClient(item.getClient_id()).getName() : "");
             saleItem.setDate(item.getDate());
             saleItem.setId(item.getId());
             for (SaleHasItem saleHasItem : saleHasItems) {
                 if (saleHasItem.getSale().equals(item.getId())) {
-                    saleItem.setTotal(saleItem.getTotal() + (saleHasItem.getItem_value() * saleHasItem.getQuantity()));
-                    saleItem.addDescription(getItem(getItemId(saleHasItem.getBarcode(), saleHasItem.getStart())).getDescription());
+                    saleItem.addDescription(getItem(saleHasItem.getItem_id()).getDescription());
                 }
             }
+            saleItem.setTotal(item.getTotal());
             sales.add(saleItem);
         }
         return sales;
     }
 
-    public Client getClient(String cpf) throws ModelException {
-        return client.get("cpf", cpf);
+    public Client getClient(Integer id) throws ModelException {
+        return client.get("id", id.toString());
     }
 
     public List<Client> listClients() throws ModelException {
@@ -157,7 +159,47 @@ public class DatabaseService {
         sale.delete(getSale(id));
     }
 
+    public void cancelSale(Integer id) throws ModelException {
+        Sale sale = this.sale.get("id", String.valueOf(id));
+        List<SaleHasItem> saleHasItems = this.saleHasItem.list();
+        for(SaleHasItem saleHasItem : saleHasItems) {
+            if(saleHasItem.getSale().equals(sale.getId())) {
+                Stock stock = this.stock.get("id", saleHasItem.getItem_id().toString());
+                stock.setQuantity(stock.getQuantity() + saleHasItem.getQuantity());
+                updateItem(stock);
+            }
+        }
+        this.sale.delete(sale);
+    }
+
     public Sale getSale(Integer id) throws ModelException {
         return sale.get("id", String.valueOf(id));
+    }
+
+    public void createSale(ArrayList<ItemObject> items, Client client, Double total, String first, String second, String third) throws ModelException {
+        Sale sale = new Sale();
+        sale.setClient_id(client != null ? client.getId() : null);
+        sale.setDate(new java.sql.Date(Calendar.getInstance().getTime().getTime()));
+        sale.setTotal(total);
+        sale.setFirst_installment(first);
+        sale.setSecond_installment(second);
+        sale.setThird_installment(third);
+        Integer id = this.sale.insertReturningGeneratedId(sale);
+        for(ItemObject item : items) {
+            SaleHasItem saleHasItem = new SaleHasItem();
+            saleHasItem.setItem_id(item.getId());
+            saleHasItem.setItem_value(Double.valueOf(item.getPrice()));
+            saleHasItem.setQuantity(Double.valueOf(item.getQuantity()));
+            saleHasItem.setSale(id);
+            this.saleHasItem.insert(saleHasItem);
+        }
+    }
+
+    public Integer createClient(Client client) throws ModelException {
+        return this.client.insertReturningGeneratedId(client);
+    }
+
+    public void updateClient(Client client) throws ModelException {
+        this.client.update(client);
     }
 }

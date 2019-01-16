@@ -9,6 +9,16 @@ public class Client extends ObjectRelational {
 	public Client() {
 	}
 
+	private Integer id;
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
 	private String cpf;
 
 	public String getCpf() {
@@ -17,6 +27,10 @@ public class Client extends ObjectRelational {
 
 	public void setCpf(String cpf) {
 		this.cpf = cpf;
+	}
+
+	public void setCpf(Integer cpf) {
+		this.cpf = cpf.toString();
 	}
 
 	private String name;

@@ -47,7 +47,7 @@ public class AddToSaleListAsync {
                             }
                         }
                     } else if(dateToSearch != null && !dateToSearch.equals("Todas as datas")) {
-                        if (dateToSearch == stockItems[2]) {
+                        if (dateToSearch.equals(stockItems[2].toString())) {
                             add = true;
                         }
                     } else {
@@ -56,7 +56,7 @@ public class AddToSaleListAsync {
                     if (add) {
                         saleView.tableModel.addRow(stockItems);
                     }
-                    if (!dates.contains(String.valueOf(item.getDate()))) {
+                    if (!dates.contains(stockItems[2].toString())) {
                         dates.add(day + "/" + month + "/" + year);
                     }
                 }

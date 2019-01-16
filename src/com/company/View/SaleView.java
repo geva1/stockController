@@ -2,8 +2,10 @@ package com.company.View;
 
 import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.swing.AutoCompleteSupport;
+import com.company.AsyncFunctions.AddToListAsync;
 import com.company.AsyncFunctions.AddToSaleListAsync;
 import com.company.Database.DatabaseService;
+import com.company.Interfaces.AddSaleToListListener;
 import com.company.Models.Client;
 import murilo.libs.model.exception.ModelException;
 
@@ -16,7 +18,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-public class SaleView extends JPanel {
+public class SaleView extends JPanel implements AddSaleToListListener {
     private JPanel saleListPanel;
     private JTable saleTable;
     private TextField searchText;
@@ -28,9 +30,12 @@ public class SaleView extends JPanel {
         }
     };
     public DatabaseService database;
+    private AddSaleToListListener listener = this;
+    private StockView stockView;
 
-    public SaleView(DatabaseService database) {
+    public SaleView(DatabaseService database, StockView stockView) {
         this.database = database;
+        this.stockView = stockView;
         initComponents();
     }
 
@@ -54,12 +59,12 @@ public class SaleView extends JPanel {
         addToStock.setText("Nova venda");
         addToStock.addActionListener(actionEvent -> {
             Integer result = JOptionPane.showConfirmDialog(null, "Deseja adicionar cliente a venda?", "Adicionar cliente", JOptionPane.YES_NO_OPTION);
-            if(result == JOptionPane.YES_OPTION) {
+            if (result == JOptionPane.YES_OPTION) {
                 try {
                     JComboBox comboBox = new JComboBox();
                     ArrayList<Client> clients = (ArrayList<Client>) database.listClients();
                     ArrayList<String> strings = new ArrayList<>();
-                    for(Client client : clients) {
+                    for (Client client : clients) {
                         strings.add(client.getName());
                     }
                     AutoCompleteSupport.install(comboBox, GlazedLists.eventListOf(strings.toArray(new String[0])));
@@ -68,27 +73,31 @@ public class SaleView extends JPanel {
                         public void ancestorAdded(AncestorEvent ancestorEvent) {
                             comboBox.requestFocusInWindow();
                         }
+
                         @Override
-                        public void ancestorRemoved(AncestorEvent ancestorEvent) { }
+                        public void ancestorRemoved(AncestorEvent ancestorEvent) {
+                        }
+
                         @Override
-                        public void ancestorMoved(AncestorEvent ancestorEvent) { }
+                        public void ancestorMoved(AncestorEvent ancestorEvent) {
+                        }
                     });
                     JOptionPane.showConfirmDialog(null, comboBox, "Cliente", JOptionPane.DEFAULT_OPTION);
-                    if(comboBox.getSelectedItem() != null) {
+                    if (comboBox.getSelectedItem() != null) {
                         Client cliente = new Client();
-                        if(comboBox.getSelectedIndex() > 0){
+                        if (comboBox.getSelectedIndex() > 0) {
                             cliente = clients.get(comboBox.getSelectedIndex());
                         } else {
                             cliente.setName((String) comboBox.getSelectedItem());
                         }
-                        SaleItselfView frame = new SaleItselfView(database, cliente);
+                        SaleItselfView frame = new SaleItselfView(database, cliente, listener);
                         frame.setVisible(true);
                     }
                 } catch (ModelException e) {
                     e.printStackTrace();
                 }
             } else {
-                SaleItselfView frame = new SaleItselfView(database);
+                SaleItselfView frame = new SaleItselfView(database, null, listener);
                 frame.setVisible(true);
             }
         });
@@ -103,14 +112,29 @@ public class SaleView extends JPanel {
         deleteItem.setText("Excluir");
         deleteItem.addActionListener(actionEvent -> {
             if (saleTable.getSelectedRow() != -1) {
-                Integer ok = JOptionPane.showConfirmDialog(null, "Você realmente gostaria de excluir a venda?", "Excluir venda", JOptionPane.OK_CANCEL_OPTION);
-                if(ok == JOptionPane.OK_OPTION) {
-                    Integer id = (Integer) tableModel.getValueAt(saleTable.getSelectedRow(), 3);
-                    try {
-                        database.deleteSale(id);
-                        addSaleToList();
-                    } catch (ModelException e) {
-                        e.printStackTrace();
+                Integer ok = JOptionPane.showConfirmDialog(null, "Você realmente gostaria de excluir a venda?",
+                        "Excluir venda", JOptionPane.OK_CANCEL_OPTION);
+                if (ok == JOptionPane.OK_OPTION) {
+                    Integer cancel = JOptionPane.showConfirmDialog(null,
+                            "Você gostaria de cancelar a venda e adicionar os itens ao estoque novamente?",
+                            "Excluir venda", JOptionPane.YES_NO_CANCEL_OPTION);
+                    if (cancel == JOptionPane.NO_OPTION) {
+                        Integer id = (Integer) tableModel.getValueAt(saleTable.getSelectedRow(), 3);
+                        try {
+                            database.deleteSale(id);
+                            addSaleToList();
+                        } catch (ModelException e) {
+                            e.printStackTrace();
+                        }
+                    } else if (cancel == JOptionPane.YES_OPTION) {
+                        Integer id = (Integer) tableModel.getValueAt(saleTable.getSelectedRow(), 3);
+                        try {
+                            database.cancelSale(id);
+                            addSaleToList();
+                            stockView.addRowsToTable();
+                        } catch (ModelException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -181,7 +205,8 @@ public class SaleView extends JPanel {
         addSaleToList();
     }
 
-    private void addSaleToList() {
+    @Override
+    public void addSaleToList() {
         new AddToSaleListAsync(this, searchText.getText(), (String) searchDate.getSelectedItem()).execute();
     }
 

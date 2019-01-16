@@ -19,24 +19,14 @@ public class SaleHasItem extends ObjectRelational {
 		this.sale = sale;
 	}
 
-	private String barcode;
+	private Integer item_id;
 
-	public String getBarcode() {
-		return barcode;
+	public Integer getItem_id() {
+		return item_id;
 	}
 
-	public void setBarcode(String barcode) {
-		this.barcode = barcode;
-	}
-
-	private String start;
-
-	public String getStart() {
-		return start;
-	}
-
-	public void setStart(String start) {
-		this.start = start;
+	public void setItem_id(Integer id) {
+		this.item_id = id;
 	}
 
 	private Double quantity;
