@@ -37,6 +37,7 @@ public class AddToListAsync {
                         for (int j = 0; j < 13; j++) {
                             if (String.valueOf(stockItems[j]).toUpperCase().contains(field.toUpperCase())) {
                                 add = true;
+                                break;
                             }
                         }
                     } else {

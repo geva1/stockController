@@ -67,6 +67,9 @@ public class SaleView extends JPanel implements AddSaleToListListener {
                     for (Client client : clients) {
                         strings.add(client.getName());
                     }
+                    for (Client client : clients) {
+                        strings.add(client.getCpf());
+                    }
                     AutoCompleteSupport.install(comboBox, GlazedLists.eventListOf(strings.toArray(new String[0])));
                     comboBox.addAncestorListener(new AncestorListener() {
                         @Override
@@ -86,9 +89,17 @@ public class SaleView extends JPanel implements AddSaleToListListener {
                     if (comboBox.getSelectedItem() != null) {
                         Client cliente = new Client();
                         if (comboBox.getSelectedIndex() > 0) {
-                            cliente = clients.get(comboBox.getSelectedIndex());
+                            int index = comboBox.getSelectedIndex();
+                            if(((String)comboBox.getSelectedItem()).matches("[0-9]+")) {
+                                index -= strings.size()/2;
+                            }
+                            cliente = clients.get(index);
                         } else {
-                            cliente.setName((String) comboBox.getSelectedItem());
+                            if(((String)comboBox.getSelectedItem()).matches("[0-9]+")) {
+                                cliente.setCpf((String) comboBox.getSelectedItem());
+                            } else {
+                                cliente.setName((String) comboBox.getSelectedItem());
+                            }
                         }
                         SaleItselfView frame = new SaleItselfView(database, cliente, listener);
                         frame.setVisible(true);
@@ -131,7 +142,6 @@ public class SaleView extends JPanel implements AddSaleToListListener {
                         try {
                             database.cancelSale(id);
                             addSaleToList();
-                            stockView.addRowsToTable();
                         } catch (ModelException e) {
                             e.printStackTrace();
                         }
@@ -204,10 +214,10 @@ public class SaleView extends JPanel implements AddSaleToListListener {
 
         addSaleToList();
     }
-
     @Override
     public void addSaleToList() {
         new AddToSaleListAsync(this, searchText.getText(), (String) searchDate.getSelectedItem()).execute();
+        stockView.addRowsToTable();
     }
 
     public JPanel getSaleListPanel() {

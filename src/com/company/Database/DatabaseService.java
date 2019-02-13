@@ -51,6 +51,14 @@ public class DatabaseService {
         this.stock.delete(stock);
     }
 
+    public void removeItems(List<ItemObject> items) throws ModelException {
+        for(ItemObject item : items) {
+            Stock stock = getItem(item.getId());
+            stock.setQuantity(stock.getQuantity() - item.getQuantity());
+            this.stock.update(stock);
+        }
+    }
+
     public Integer getItemId(String barcode, String start) throws ModelException {
         List<Stock> items = stock.list();
         for (Stock item : items) {
@@ -155,6 +163,20 @@ public class DatabaseService {
         return client.list();
     }
 
+    public Integer getClientId(String cpf) throws ModelException {
+        List<Client> clients = client.list();
+        for(Client client : clients) {
+            if(client.getCpf().equals(cpf)) {
+                return client.getId();
+            }
+        }
+        return null;
+    }
+
+    public void deleteClient(Integer id) throws ModelException {
+        client.delete(getClient(id));
+    }
+
     public void deleteSale(Integer id) throws ModelException {
         sale.delete(getSale(id));
     }
@@ -193,6 +215,7 @@ public class DatabaseService {
             saleHasItem.setSale(id);
             this.saleHasItem.insert(saleHasItem);
         }
+        removeItems(items);
     }
 
     public Integer createClient(Client client) throws ModelException {

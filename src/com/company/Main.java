@@ -1,6 +1,7 @@
 package com.company;
 
 import com.company.Database.DatabaseService;
+import com.company.View.ClientView;
 import com.company.View.SaleView;
 import com.company.View.StockView;
 
@@ -23,53 +24,17 @@ public class Main extends JFrame {
     @SuppressWarnings("unchecked")
     private void initComponents() {
         JTabbedPane jTabbedPane1 = new JTabbedPane();
-        JPanel jPanel1 = new JPanel();
-        JPanel jPanel2 = new JPanel();
-        JPanel jPanel3 = new JPanel();
 
         jTabbedPane1.setFont(new Font("Tahoma", Font.PLAIN, 14));
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGap(0, 1100, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-                jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGap(0, 510, Short.MAX_VALUE)
-        );
-
         StockView stockView = new StockView(database);
         jTabbedPane1.addTab("Estoque", stockView.getStockListPanel());
 
-        GroupLayout jPanel2Layout = new GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGap(0, 1100, Short.MAX_VALUE)
-        );
-        jPanel2Layout.setVerticalGroup(
-                jPanel2Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGap(0, 510, Short.MAX_VALUE)
-        );
-
         jTabbedPane1.addTab("Vendas", new SaleView(database, stockView).getSaleListPanel());
 
-        GroupLayout jPanel3Layout = new GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGap(0, 1100, Short.MAX_VALUE)
-        );
-        jPanel3Layout.setVerticalGroup(
-                jPanel3Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGap(0, 510, Short.MAX_VALUE)
-        );
-
-        jTabbedPane1.addTab("Clientes", jPanel3);
+        jTabbedPane1.addTab("Clientes", new ClientView(database));
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

@@ -1,5 +1,7 @@
 package com.company.View;
 
+import ca.odell.glazedlists.GlazedLists;
+import ca.odell.glazedlists.swing.AutoCompleteSupport;
 import com.company.Database.DatabaseService;
 import com.company.Interfaces.AddClientListener;
 import com.company.Interfaces.AddSaleToListListener;
@@ -9,6 +11,8 @@ import com.company.Objects.ItemObject;
 import murilo.libs.model.exception.ModelException;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -78,7 +82,42 @@ class SaleFinishView extends JFrame implements AddClientListener {
             addEditClient.setText("Adicionar Cliente");
         }
         addEditClient.addActionListener(actionEvent -> {
-            //todo: call add client (not create)
+            try {
+                JComboBox comboBox = new JComboBox();
+                ArrayList<Client> clients = (ArrayList<Client>) database.listClients();
+                ArrayList<String> strings = new ArrayList<>();
+                for (Client client : clients) {
+                    strings.add(client.getCpf());
+                }
+                AutoCompleteSupport.install(comboBox, GlazedLists.eventListOf(strings.toArray(new String[0])));
+                comboBox.addAncestorListener(new AncestorListener() {
+                    @Override
+                    public void ancestorAdded(AncestorEvent ancestorEvent) {
+                        comboBox.requestFocusInWindow();
+                    }
+
+                    @Override
+                    public void ancestorRemoved(AncestorEvent ancestorEvent) {
+                    }
+
+                    @Override
+                    public void ancestorMoved(AncestorEvent ancestorEvent) {
+                    }
+                });
+                JOptionPane.showConfirmDialog(null, comboBox, "Cliente", JOptionPane.DEFAULT_OPTION);
+                if (comboBox.getSelectedItem() != null) {
+                    Client cliente = new Client();
+                    if (comboBox.getSelectedIndex() > 0) {
+                        cliente = clients.get(comboBox.getSelectedIndex());
+                    } else {
+                        cliente.setCpf((String) comboBox.getSelectedItem());
+                    }
+                    ClientItemView frame = new ClientItemView(database, addClientListener, cliente, cliente.getName() != null);
+                    frame.setVisible(true);
+                }
+            } catch (ModelException e) {
+                e.printStackTrace();
+            }
         });
 
         removeClient.setText("Remover Cliente");
@@ -102,13 +141,13 @@ class SaleFinishView extends JFrame implements AddClientListener {
                 JOptionPane.showMessageDialog(null, "Selecione os métodos de pagamento");
                 return;
             }
-            if((installmentList.getSelectedIndex() > 2 || installmentList2.getSelectedIndex() > 2
-                    || installmentList3.getSelectedIndex() > 2)) {
+            if((installmentList.getSelectedIndex() > 2 || (installmentList2.getSelectedIndex() > 2 && paymentMode.getSelectedIndex() > 0)
+                    || (installmentList3.getSelectedIndex() > 2 && paymentMode.getSelectedIndex() > 1))) {
                 if(client == null) {
                     JOptionPane.showMessageDialog(null,
                             "Para pagamento em cheque é necessário adicionar um cliente");
                     return;
-                } else if((client != null && client.getCpf() == null)) {
+                } else if(client != null && (client.getCpf() == null || client.getName() == null)) {
                     Integer result = JOptionPane.showConfirmDialog(null,
                             "Para pagamento em cheque é necessário o cadastro do cliente,\n deseja finalizar o cadastro?",
                             "Cliente", JOptionPane.YES_NO_OPTION);

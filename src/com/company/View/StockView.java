@@ -91,7 +91,6 @@ public class StockView extends JPanel implements AddItemsToTableListener {
         stockTable.setModel(tableModel);
         stockListScroll.setViewportView(stockTable);
 
-        stockTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         stockTable.getColumnModel().getColumn(0).setPreferredWidth(60);
         stockTable.getColumnModel().getColumn(1).setPreferredWidth(100);
         stockTable.getColumnModel().getColumn(2).setPreferredWidth(50);

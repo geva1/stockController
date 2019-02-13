@@ -2,6 +2,7 @@ package com.company.View;
 
 import com.company.Database.DatabaseService;
 import com.company.Interfaces.AddClientListener;
+import com.company.Interfaces.AddClientToListListener;
 import com.company.Models.Client;
 import murilo.libs.model.exception.ModelException;
 
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 
 class ClientItemView extends JFrame {
     private AddClientListener listener;
+    private AddClientToListListener clientListener;
     private Boolean isEdit;
     private Client client;
     private DatabaseService database;
@@ -22,10 +24,19 @@ class ClientItemView extends JFrame {
         initComponents();
     }
 
-    ClientItemView(DatabaseService database, Boolean isEdit, Client client) {
+    ClientItemView(DatabaseService database, AddClientListener listener, Client client, Boolean isEdit) {
+        this.isEdit = isEdit;
+        this.client = client;
+        this.listener = listener;
+        this.database = database;
+        initComponents();
+    }
+
+    ClientItemView(DatabaseService database, AddClientToListListener clientListener, Boolean isEdit, Client client) {
         this.client = client;
         this.database = database;
         this.isEdit = isEdit;
+        this.clientListener = clientListener;
         initComponents();
     }
     
@@ -55,6 +66,7 @@ class ClientItemView extends JFrame {
         }
         if(client != null && client.getCpf() != null) {
             cpfText.setText(client.getCpf());
+            cpfText.setEditable(false);
         }
         if(client != null && client.getAdress() != null) {
             addressText.setText(client.getAdress());
@@ -108,6 +120,10 @@ class ClientItemView extends JFrame {
                     } catch (ModelException e) {
                         e.printStackTrace();
                     }
+                }
+                //todo: update client list without listener
+                if(clientListener != null) {
+                    clientListener.addClientToList();
                 }
                 dispose();
             } else {

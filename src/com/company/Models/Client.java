@@ -2,85 +2,94 @@ package com.company.Models;
 
 import murilo.libs.relational.ObjectRelational;
 
-public class Client extends ObjectRelational { 
+public class Client extends ObjectRelational {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public Client() {
-	}
+    public Client() {
+    }
 
-	private Integer id;
+    public Client(String cpf, String name, String adress, String phone, String cellphone, String email) {
+        this.cpf = cpf;
+        this.name = name;
+        this.adress = adress;
+        this.phone = phone;
+        this.cellphone = cellphone;
+        this.email = email;
+    }
 
-	public Integer getId() {
-		return id;
-	}
+    private Integer id;
 
-	public void setId(Integer id) {
-		this.id = id;
-	}
+    public Integer getId() {
+        return id;
+    }
 
-	private String cpf;
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-	public String getCpf() {
-		return cpf;
-	}
+    private String cpf;
 
-	public void setCpf(String cpf) {
-		this.cpf = cpf;
-	}
+    public String getCpf() {
+        return cpf;
+    }
 
-	public void setCpf(Integer cpf) {
-		this.cpf = cpf.toString();
-	}
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
 
-	private String name;
+    public void setCpf(Integer cpf) {
+        this.cpf = cpf.toString();
+    }
 
-	public String getName() {
-		return name;
-	}
+    private String name;
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	private String adress;
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public String getAdress() {
-		return adress;
-	}
+    private String adress;
 
-	public void setAdress(String adress) {
-		this.adress = adress;
-	}
+    public String getAdress() {
+        return adress;
+    }
 
-	private String phone;
+    public void setAdress(String adress) {
+        this.adress = adress;
+    }
 
-	public String getPhone() {
-		return phone;
-	}
+    private String phone;
 
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
+    public String getPhone() {
+        return phone;
+    }
 
-	private String cellphone;
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 
-	public String getCellphone() {
-		return cellphone;
-	}
+    private String cellphone;
 
-	public void setCellphone(String cellphone) {
-		this.cellphone = cellphone;
-	}
+    public String getCellphone() {
+        return cellphone;
+    }
 
-	private String email;
+    public void setCellphone(String cellphone) {
+        this.cellphone = cellphone;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    private String email;
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
 }
